@@ -183,7 +183,7 @@
           </div>
 
           <div class="panel__note">
-            예비군 관련 기준과 행정 안내를 확인할 수 있습니다. 상세 답변은 하단 챗에서 RAG 문서를 기준으로 안내하도록 구성할 수 있습니다.
+            예비군 관련 기준과 행정 안내를 확인할 수 있습니다. 세부 판단이 필요한 경우 교관 또는 조교에게 문의해 주세요.
           </div>
           <div id="regulation-list" class="accordion-list" aria-live="polite"></div>
         </section>
@@ -218,45 +218,29 @@
               <p class="panel__eyebrow">6. 챗</p>
               <h2>서산시 과학화 예비군 챗</h2>
             </div>
-            <span id="chat-status-badge" class="panel__tag">연결 준비 중</span>
+            <span class="panel__tag">운영 보류</span>
           </div>
 
-          <div class="chat-layout">
-            <aside class="chat-sidebar" aria-label="대화 목록">
-              <div class="chat-sidebar__head">
-                <h3>대화 목록</h3>
-                <button id="chat-new-thread" class="chat-side-button" type="button">새 대화</button>
-              </div>
-              <div id="chat-thread-list" class="chat-thread-list"></div>
-            </aside>
+          <div class="chat-static">
+            <div class="chat-intro">
+              <p class="chat-intro__title">챗 기능 연결은 현재 사용하지 않습니다.</p>
+              <p class="chat-intro__body">
+                외부 챗 서버 연결은 보안 검토 전까지 운영하지 않도록 변경했습니다.
+                예비군 훈련, 복무, 연기, 불참, 복장, 행정 처리와 관련된 문의는 법령 안내를 먼저 확인하고,
+                세부 판단이 필요한 경우 교관 또는 조교에게 문의해 주세요.
+              </p>
+            </div>
 
-            <div class="chat-main">
-              <div class="chat-intro">
-                <p class="chat-intro__title">예비군 법령 기반 안내</p>
-                <p class="chat-intro__body">
-                  예비군 훈련, 복무, 연기, 불참, 복장, 행정 처리 등과 관련된 질문만 답변하도록 설계합니다.
-                  관련 규정 확인이 필요할 경우 교관 또는 조교에게 문의하도록 안내합니다.
-                </p>
-              </div>
+            <div class="chat-guidance">
+              <article class="chat-guidance__card">
+                <strong>먼저 확인할 항목</strong>
+                <p>상단의 공지사항, 예비군 법령, 식단 메뉴에서 필요한 정보를 우선 확인해 주세요.</p>
+              </article>
 
-              <div id="chat-messages" class="chat-messages" aria-live="polite"></div>
-
-              <form id="chat-form" class="chat-composer">
-                <label class="chat-composer__label" for="chat-input">질문 입력</label>
-                <textarea
-                  id="chat-input"
-                  rows="4"
-                  placeholder="예: 예비군 훈련 연기 신청은 어떻게 하나요?"
-                ></textarea>
-                <div class="chat-composer__actions">
-                  <p id="chat-status-text" class="chat-status-text">
-                    챗 API 주소를 설정하면 이 영역에서 답변을 받을 수 있습니다.
-                  </p>
-                  <button id="chat-submit" class="action-button chat-submit" type="submit">
-                    전송
-                  </button>
-                </div>
-              </form>
+              <article class="chat-guidance__card">
+                <strong>추가 문의가 필요한 경우</strong>
+                <p>관련 규정 확인이 필요하거나 개인 상황 판단이 필요한 경우 교관 또는 조교에게 문의해 주세요.</p>
+              </article>
             </div>
           </div>
         </section>
@@ -264,7 +248,7 @@
 
       <footer class="footer">
         <p>서산시 과학화 예비군 훈련장 안내용 정적 웹페이지</p>
-        <p>운영 데이터는 `data` 폴더에서 수정하고, 챗 서버는 별도 프로세스로 연결합니다.</p>
+        <p>운영 데이터는 `data` 폴더에서 수정하며, 현재는 외부 챗 연동 없이 정적으로 운영합니다.</p>
       </footer>
     </div>
 
