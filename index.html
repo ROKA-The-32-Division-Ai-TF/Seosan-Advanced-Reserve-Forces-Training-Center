@@ -8,6 +8,10 @@
       content="32사단 예비군 훈련 참가자를 위한 모바일 중심 디지털 안내 허브"
     />
     <meta name="theme-color" content="#10233a" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%230f2237'/%3E%3Ctext x='50%25' y='58%25' text-anchor='middle' font-size='28' font-family='Arial' font-weight='700' fill='white'%3E32%3C/text%3E%3C/svg%3E"
+    />
     <title>예비군 훈련 안내</title>
     <link rel="stylesheet" href="style.css" />
   </head>
@@ -16,26 +20,43 @@
 
     <div class="page-shell">
       <header class="hero">
-        <div class="hero__top">
-          <p class="hero__eyebrow">제32보병사단 디지털 안내 허브</p>
-          <div class="hero__badge" aria-hidden="true">
-            <div class="hero__shield">32</div>
-            <div class="hero__badge-text">
-              <strong>32사단</strong>
-              <span>예비군 훈련 지원</span>
+        <div class="hero__header">
+          <div class="hero__title-group">
+            <p class="hero__eyebrow">제32보병사단 디지털 안내 허브</p>
+            <h1 class="hero__title">예비군 훈련 안내</h1>
+            <p class="hero__subtitle">필요한 정보를 빠르게 확인하세요</p>
+          </div>
+
+          <div class="hero__symbols" aria-label="부대 상징">
+            <div class="hero__symbol-card">
+              <img
+                class="hero__symbol hero__symbol--division"
+                src="ROKA_32nd_Infantry_Division_Insignia.svg.png"
+                alt="32사단 부대 마크"
+              />
+            </div>
+            <div class="hero__symbol-card">
+              <img
+                class="hero__symbol hero__symbol--reserve"
+                src="lExcPgSTgV_HoWrsVffyyPGuWyaWdDps7O39XOhIPVj6lCpgS_gLVsGyZ6gbtq5XIXHq3o5mcjUjQArbaQT_DQ.svg"
+                alt="예비군 상징"
+              />
             </div>
           </div>
         </div>
 
-        <div class="hero__content">
-          <div>
-            <h1 class="hero__title">예비군 훈련 안내</h1>
-            <p class="hero__subtitle">필요한 정보를 빠르게 확인하세요</p>
-          </div>
-          <p class="hero__description">
-            설문, 식단, 공지, 법령, 자주 묻는 질문을 한 화면에서 빠르게 확인할 수
-            있도록 구성한 모바일 안내 페이지입니다.
-          </p>
+        <div class="hero__status">
+          <section class="status-box" aria-labelledby="current-time-title">
+            <p id="current-time-title" class="status-box__label">현재 시간</p>
+            <strong id="current-time" class="status-box__value">불러오는 중</strong>
+            <p id="current-date" class="status-box__meta">불러오는 중</p>
+          </section>
+
+          <section class="status-box" aria-labelledby="current-weather-title">
+            <p id="current-weather-title" class="status-box__label">서산시 날씨</p>
+            <strong id="current-weather" class="status-box__value">불러오는 중</strong>
+            <p id="weather-meta" class="status-box__meta">실시간 기상 정보 연결 중</p>
+          </section>
         </div>
 
         <nav class="menu-grid" aria-label="주요 메뉴">
@@ -48,7 +69,6 @@
               </svg>
             </span>
             <strong>설문</strong>
-            <span>외부 링크 연결</span>
           </a>
 
           <a class="menu-card" href="#meals">
@@ -60,7 +80,6 @@
               </svg>
             </span>
             <strong>오늘 식단</strong>
-            <span>날짜·메뉴·비고 확인</span>
           </a>
 
           <a class="menu-card" href="#notices">
@@ -72,7 +91,6 @@
               </svg>
             </span>
             <strong>공지사항</strong>
-            <span>최신 공지 우선 표시</span>
           </a>
 
           <a class="menu-card" href="#regulations">
@@ -84,7 +102,6 @@
               </svg>
             </span>
             <strong>예비군 법령</strong>
-            <span>아코디언으로 열람</span>
           </a>
 
           <a class="menu-card" href="#qa">
@@ -96,7 +113,6 @@
               </svg>
             </span>
             <strong>Q&amp;A</strong>
-            <span>자주 묻는 질문 확인</span>
           </a>
         </nav>
       </header>
@@ -112,12 +128,7 @@
           </div>
 
           <div class="survey-box">
-            <div>
-              <p class="survey-box__title">훈련 관련 설문 링크</p>
-              <p class="survey-box__description">
-                설문 링크를 입력하면 이 버튼으로 바로 연결됩니다.
-              </p>
-            </div>
+            <p class="survey-box__title">훈련 설문 바로가기</p>
             <a
               id="survey-link"
               class="action-button"
@@ -126,7 +137,7 @@
               rel="noopener noreferrer"
               aria-disabled="true"
             >
-              설문 링크 준비 중
+              설문 열기
             </a>
           </div>
         </section>
