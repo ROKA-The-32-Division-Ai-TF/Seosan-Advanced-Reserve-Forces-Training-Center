@@ -6,7 +6,7 @@
 
 window.siteConfig = {
   siteTitle: "서산시 과학화 예비군 훈련장",
-  pageSubtitle: "훈련 참가자가 필요한 정보를 빠르게 확인할 수 있는 안내 허브",
+  pageSubtitle: "",
   survey: {
     url: "https://docs.google.com/forms/d/e/1FAIpQLSffbvyIgFMrx4TUHviybKozJizVmue26MNubdqM98nbtVEJfw/viewform",
     buttonLabel: "설문 참여하기",

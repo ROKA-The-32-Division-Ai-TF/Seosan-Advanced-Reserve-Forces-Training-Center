@@ -35,22 +35,20 @@
             <div class="hero__copy">
               <p class="hero__eyebrow">Reservist Digital Guide</p>
               <h1 class="hero__title">서산시 과학화 예비군 훈련장</h1>
-              <p class="hero__subtitle">훈련 참가자가 필요한 정보를 빠르게 확인할 수 있는 안내 허브</p>
             </div>
-          </div>
 
-          <div class="hero__status">
-            <section class="status-box" aria-labelledby="current-time-title">
-              <p id="current-time-title" class="status-box__label">현재 시간</p>
-              <strong id="current-time" class="status-box__value">불러오는 중</strong>
-              <p id="current-date" class="status-box__meta">불러오는 중</p>
-            </section>
-
-            <section class="status-box" aria-labelledby="current-weather-title">
-              <p id="current-weather-title" class="status-box__label">서산시 날씨</p>
-              <strong id="current-weather" class="status-box__value">불러오는 중</strong>
-              <p id="weather-meta" class="status-box__meta">실시간 기상 정보 연결 중</p>
-            </section>
+            <div class="hero__status-inline" aria-label="현재 시간과 날씨">
+              <p class="hero__status-line">
+                <span class="hero__status-key">현재 시간</span>
+                <strong id="current-time">불러오는 중</strong>
+                <span id="current-date">불러오는 중</span>
+              </p>
+              <p class="hero__status-line">
+                <span class="hero__status-key">서산시 날씨</span>
+                <strong id="current-weather">불러오는 중</strong>
+                <span id="weather-meta">실시간 기상 정보 연결 중</span>
+              </p>
+            </div>
           </div>
         </div>
 
@@ -88,7 +86,12 @@
             <strong>공지사항</strong>
           </a>
 
-          <a class="menu-card" href="#regulations" data-section-link="regulations">
+          <a
+            class="menu-card"
+            href="https://www.yebigun1.mil.kr/dmobis/rfh/rgt/info/04_01_legislation.jsp"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             <span class="menu-card__icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" focusable="false">
                 <path
@@ -108,17 +111,6 @@
               </svg>
             </span>
             <strong>정신전력평가</strong>
-          </a>
-
-          <a class="menu-card" href="#chat" data-section-link="chat">
-            <span class="menu-card__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" focusable="false">
-                <path
-                  d="M4 5h16v11H8l-4 3V5Zm4 4h8M8 12h5"
-                />
-              </svg>
-            </span>
-            <strong>챗</strong>
           </a>
         </nav>
       </header>
@@ -173,25 +165,10 @@
           <div id="notice-list" class="stack-list" aria-live="polite"></div>
         </section>
 
-        <section id="regulations" class="panel content-panel" data-section-panel hidden>
-          <div class="panel__heading">
-            <div>
-              <p class="panel__eyebrow">4. 예비군 법령</p>
-              <h2>법령 및 행정 기준</h2>
-            </div>
-            <span class="panel__tag">접기 / 펼치기</span>
-          </div>
-
-          <div class="panel__note">
-            예비군 관련 기준과 행정 안내를 확인할 수 있습니다. 세부 판단이 필요한 경우 교관 또는 조교에게 문의해 주세요.
-          </div>
-          <div id="regulation-list" class="accordion-list" aria-live="polite"></div>
-        </section>
-
         <section id="mental-evaluation" class="panel content-panel" data-section-panel hidden>
           <div class="panel__heading">
             <div>
-              <p class="panel__eyebrow">5. 정신전력평가</p>
+              <p class="panel__eyebrow">4. 정신전력평가</p>
               <h2>평가 링크</h2>
             </div>
             <span class="panel__tag">준비 상태</span>
@@ -212,43 +189,11 @@
           </div>
         </section>
 
-        <section id="chat" class="panel chat-panel content-panel" data-section-panel hidden>
-          <div class="panel__heading">
-            <div>
-              <p class="panel__eyebrow">6. 챗</p>
-              <h2>서산시 과학화 예비군 챗</h2>
-            </div>
-            <span class="panel__tag">운영 보류</span>
-          </div>
-
-          <div class="chat-static">
-            <div class="chat-intro">
-              <p class="chat-intro__title">챗 기능 연결은 현재 사용하지 않습니다.</p>
-              <p class="chat-intro__body">
-                외부 챗 서버 연결은 보안 검토 전까지 운영하지 않도록 변경했습니다.
-                예비군 훈련, 복무, 연기, 불참, 복장, 행정 처리와 관련된 문의는 법령 안내를 먼저 확인하고,
-                세부 판단이 필요한 경우 교관 또는 조교에게 문의해 주세요.
-              </p>
-            </div>
-
-            <div class="chat-guidance">
-              <article class="chat-guidance__card">
-                <strong>먼저 확인할 항목</strong>
-                <p>상단의 공지사항, 예비군 법령, 식단 메뉴에서 필요한 정보를 우선 확인해 주세요.</p>
-              </article>
-
-              <article class="chat-guidance__card">
-                <strong>추가 문의가 필요한 경우</strong>
-                <p>관련 규정 확인이 필요하거나 개인 상황 판단이 필요한 경우 교관 또는 조교에게 문의해 주세요.</p>
-              </article>
-            </div>
-          </div>
-        </section>
       </main>
 
       <footer class="footer">
         <p>서산시 과학화 예비군 훈련장 안내용 정적 웹페이지</p>
-        <p>운영 데이터는 `data` 폴더에서 수정하며, 현재는 외부 챗 연동 없이 정적으로 운영합니다.</p>
+        <p>운영 데이터는 `data` 폴더에서 수정합니다.</p>
       </footer>
     </div>
 

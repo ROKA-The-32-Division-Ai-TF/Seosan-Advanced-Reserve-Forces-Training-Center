@@ -1,6 +1,6 @@
 /* 수정 포인트:
  * 1) 설문 링크, 정신전력평가 링크, 날씨 위치 정보는 data/site-config.js에서 수정합니다.
- * 2) 식단, 공지, 법령 데이터는 data 폴더의 각 파일에서 수정합니다.
+ * 2) 식단과 공지 데이터는 data 폴더의 각 파일에서 수정합니다.
  * 3) 이 파일은 화면 렌더링과 현재 시간/날씨 표시만 담당합니다.
  */
 
@@ -8,7 +8,6 @@
   const siteConfig = window.siteConfig || {};
   const mealsData = Array.isArray(window.mealsData) ? window.mealsData : [];
   const noticesData = Array.isArray(window.noticesData) ? window.noticesData : [];
-  const regulationsData = Array.isArray(window.regulationsData) ? window.regulationsData : [];
 
   const currentTime = document.querySelector("#current-time");
   const currentDate = document.querySelector("#current-date");
@@ -20,7 +19,6 @@
   const mealSummary = document.querySelector("#meal-summary");
   const mealList = document.querySelector("#meal-list");
   const noticeList = document.querySelector("#notice-list");
-  const regulationList = document.querySelector("#regulation-list");
   const sectionLinks = Array.from(document.querySelectorAll("[data-section-link]"));
   const sectionPanels = Array.from(document.querySelectorAll("[data-section-panel]"));
 
@@ -32,12 +30,6 @@
   fetchWeather(siteConfig.weather || {});
   renderMeals(mealsData);
   renderNotices(noticesData);
-  renderAccordion(
-    regulationList,
-    regulationsData,
-    "등록된 법령 안내가 없습니다. data/regulations.js 파일에 항목을 추가해 주세요.",
-    { titleKey: "title", bodyKey: "content" }
-  );
 
   function setupMeta(config) {
     const siteTitle = config.siteTitle || "서산시 과학화 예비군 훈련장";
@@ -333,44 +325,6 @@
 
       article.append(meta, title, body);
       noticeList.appendChild(article);
-    });
-  }
-
-  function renderAccordion(container, items, emptyMessage, keys) {
-    if (!container) {
-      return;
-    }
-
-    const normalizedItems = items.filter((item) => item && typeof item === "object");
-
-    if (normalizedItems.length === 0) {
-      container.innerHTML = "";
-      container.appendChild(createEmptyState(emptyMessage));
-      return;
-    }
-
-    container.innerHTML = "";
-    normalizedItems.forEach((item) => {
-      const details = document.createElement("details");
-      const summary = document.createElement("summary");
-      summary.textContent = item[keys.titleKey] || "제목 없음";
-
-      const content = document.createElement("div");
-      content.className = "accordion-content";
-      content.appendChild(createRichText(item[keys.bodyKey] || ""));
-
-      if (item.linkUrl) {
-        const link = document.createElement("a");
-        link.className = "inline-link";
-        link.href = item.linkUrl;
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
-        link.textContent = item.linkLabel || "관련 링크 열기";
-        content.appendChild(link);
-      }
-
-      details.append(summary, content);
-      container.appendChild(details);
     });
   }
 
