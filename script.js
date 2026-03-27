@@ -33,14 +33,18 @@
 
   function setupMeta(config) {
     const siteTitle = config.siteTitle || "서산시 과학화 예비군 훈련장";
-    const pageSubtitle = config.pageSubtitle || "훈련 참가자가 필요한 정보를 빠르게 확인할 수 있는 안내 허브";
+    const pageSubtitle = config.pageSubtitle || "";
 
     document.title = siteTitle;
 
     const heroTitle = document.querySelector(".hero__title");
+    const titleLines = Array.from(document.querySelectorAll(".hero__title-line"));
     const heroSubtitle = document.querySelector(".hero__subtitle");
 
-    if (heroTitle) {
+    if (titleLines.length >= 2) {
+      titleLines[0].textContent = "서산시";
+      titleLines[1].textContent = "과학화 예비군 훈련장";
+    } else if (heroTitle) {
       heroTitle.textContent = siteTitle;
     }
 
