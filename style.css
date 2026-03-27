@@ -149,43 +149,55 @@ textarea {
 
 .hero__title {
   margin: 0;
-  font-size: clamp(2rem, 7vw, 3.2rem);
-  line-height: 1.08;
+  font-size: clamp(1.85rem, 6.8vw, 3rem);
+  line-height: 1.02;
   letter-spacing: -0.04em;
 }
 
-.hero__title span {
+.hero__title-line {
   display: block;
 }
 
 .hero__status-inline {
   grid-column: 2;
-  margin-top: 8px;
+  margin-top: 10px;
   display: grid;
-  gap: 6px;
-  justify-self: end;
+  gap: 4px;
+  justify-self: start;
   align-self: start;
 }
 
-.hero__status-line {
+.hero__status-single,
+.hero__status-subline {
   margin: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 5px;
   align-items: center;
-  font-size: 0.84rem;
+  font-size: 0.78rem;
   color: var(--ink-soft);
-  line-height: 1.5;
+  line-height: 1.45;
 }
 
-.hero__status-line strong {
+.hero__status-single strong,
+.hero__status-subline strong {
   color: var(--ink);
   font-weight: 800;
+}
+
+.hero__status-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .hero__status-key {
   color: var(--blue);
   font-weight: 800;
+}
+
+.hero__status-separator {
+  opacity: 0.55;
 }
 
 .menu-grid {
@@ -579,7 +591,7 @@ a:focus-visible {
   }
 
   .hero__status-inline {
-    justify-items: end;
+    justify-self: end;
     margin-top: 0;
   }
 
