@@ -154,6 +154,10 @@ textarea {
   letter-spacing: -0.04em;
 }
 
+.hero__title span {
+  display: block;
+}
+
 .hero__status-inline {
   grid-column: 2;
   margin-top: 8px;
