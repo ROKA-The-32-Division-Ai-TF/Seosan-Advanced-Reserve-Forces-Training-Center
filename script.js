@@ -15,6 +15,7 @@
   const weatherMeta = document.querySelector("#weather-meta");
   const surveyLink = document.querySelector("#survey-link");
   const mentalLink = document.querySelector("#mental-link");
+  const chatbotLink = document.querySelector("#chatbot-link");
   const todayLabel = document.querySelector("#today-label");
   const mealSummary = document.querySelector("#meal-summary");
   const mealList = document.querySelector("#meal-list");
@@ -25,6 +26,7 @@
   setupMeta(siteConfig);
   setupExternalLink(surveyLink, siteConfig.survey || {}, "설문 링크 준비 중");
   setupExternalLink(mentalLink, siteConfig.mentalEvaluation || {}, "링크 준비 중");
+  setupExternalMenuLink(chatbotLink, siteConfig.chatbot || {});
   initializeSectionNavigation();
   startClock();
   fetchWeather(siteConfig.weather || {});
@@ -70,6 +72,26 @@
 
     element.href = "#";
     element.textContent = pendingText;
+    element.setAttribute("aria-disabled", "true");
+    element.addEventListener("click", (event) => {
+      event.preventDefault();
+    });
+  }
+
+  function setupExternalMenuLink(element, config) {
+    if (!element) {
+      return;
+    }
+
+    const url = typeof config.url === "string" ? config.url.trim() : "";
+
+    if (url) {
+      element.href = url;
+      element.setAttribute("aria-disabled", "false");
+      return;
+    }
+
+    element.href = "#";
     element.setAttribute("aria-disabled", "true");
     element.addEventListener("click", (event) => {
       event.preventDefault();
@@ -198,7 +220,6 @@
     } catch (error) {
       currentWeather.textContent = `${cityName} 날씨 정보 없음`;
       weatherMeta.textContent = "실시간 기상 정보를 불러오지 못했습니다.";
-      console.error(error);
     }
   }
 
