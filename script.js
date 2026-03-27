@@ -1,7 +1,7 @@
 /* 수정 포인트:
- * 1) 설문 링크, 날씨 위치 정보는 data/site-config.js에서 수정합니다.
- * 2) 식단, 공지, 법령, Q&A 데이터는 data 폴더의 각 파일에서 수정합니다.
- * 3) 이 파일은 데이터를 화면에 표시하고 현재 시간/날씨를 불러오는 역할만 담당합니다.
+ * 1) 설문, 정신전력평가, 챗 API 설정은 data/site-config.js에서 수정합니다.
+ * 2) 식단, 공지, 법령 데이터는 data 폴더의 각 파일에서 수정합니다.
+ * 3) 이 파일은 화면 렌더링과 현재 시간/날씨/챗 연결만 담당합니다.
  */
 
 (function () {
@@ -9,22 +9,36 @@
   const mealsData = Array.isArray(window.mealsData) ? window.mealsData : [];
   const noticesData = Array.isArray(window.noticesData) ? window.noticesData : [];
   const regulationsData = Array.isArray(window.regulationsData) ? window.regulationsData : [];
-  const qaData = Array.isArray(window.qaData) ? window.qaData : [];
+
+  const CHAT_STORAGE_KEY = "seosan_reservist_chat_threads";
+  let chatThreads = [];
+  let activeThreadId = null;
 
   const currentTime = document.querySelector("#current-time");
   const currentDate = document.querySelector("#current-date");
   const currentWeather = document.querySelector("#current-weather");
   const weatherMeta = document.querySelector("#weather-meta");
   const surveyLink = document.querySelector("#survey-link");
+  const mentalLink = document.querySelector("#mental-link");
   const todayLabel = document.querySelector("#today-label");
   const mealSummary = document.querySelector("#meal-summary");
   const mealList = document.querySelector("#meal-list");
   const noticeList = document.querySelector("#notice-list");
   const regulationList = document.querySelector("#regulation-list");
-  const qaList = document.querySelector("#qa-list");
+  const chatStatusBadge = document.querySelector("#chat-status-badge");
+  const chatThreadList = document.querySelector("#chat-thread-list");
+  const chatMessages = document.querySelector("#chat-messages");
+  const chatForm = document.querySelector("#chat-form");
+  const chatInput = document.querySelector("#chat-input");
+  const chatSubmit = document.querySelector("#chat-submit");
+  const chatStatusText = document.querySelector("#chat-status-text");
+  const chatNewThreadButton = document.querySelector("#chat-new-thread");
+
+  const chatConfig = siteConfig.chat || {};
 
   setupMeta(siteConfig);
-  setupSurvey(siteConfig.survey || {});
+  setupExternalLink(surveyLink, siteConfig.survey || {}, "설문 링크 준비 중");
+  setupExternalLink(mentalLink, siteConfig.mentalEvaluation || {}, "링크 준비 중");
   startClock();
   fetchWeather(siteConfig.weather || {});
   renderMeals(mealsData);
@@ -35,58 +49,52 @@
     "등록된 법령 안내가 없습니다. data/regulations.js 파일에 항목을 추가해 주세요.",
     { titleKey: "title", bodyKey: "content" }
   );
-  renderAccordion(
-    qaList,
-    qaData,
-    "등록된 Q&A가 없습니다. data/qa.js 파일에 질문과 답변을 추가해 주세요.",
-    { titleKey: "question", bodyKey: "answer" }
-  );
+  initializeChat();
 
   function setupMeta(config) {
-    if (config.pageTitle) {
-      document.title = config.pageTitle;
-    }
+    const siteTitle = config.siteTitle || "서산시 과학화 예비군 훈련장";
+    const pageSubtitle = config.pageSubtitle || "훈련 참가자가 필요한 정보를 빠르게 확인할 수 있는 안내 허브";
+
+    document.title = siteTitle;
 
     const heroTitle = document.querySelector(".hero__title");
     const heroSubtitle = document.querySelector(".hero__subtitle");
-    const heroEyebrow = document.querySelector(".hero__eyebrow");
 
-    if (heroTitle && config.pageTitle) {
-      heroTitle.textContent = config.pageTitle;
+    if (heroTitle) {
+      heroTitle.textContent = siteTitle;
     }
 
-    if (heroSubtitle && config.pageSubtitle) {
-      heroSubtitle.textContent = config.pageSubtitle;
-    }
-
-    if (heroEyebrow && config.unitName) {
-      heroEyebrow.textContent = `${config.unitName} 디지털 안내 허브`;
+    if (heroSubtitle) {
+      heroSubtitle.textContent = pageSubtitle;
     }
   }
 
-  function setupSurvey(surveyConfig) {
-    const url = typeof surveyConfig.url === "string" ? surveyConfig.url.trim() : "";
-    const label = surveyConfig.buttonLabel || "설문 열기";
-
-    if (!surveyLink) {
+  function setupExternalLink(element, config, pendingText) {
+    if (!element) {
       return;
     }
 
+    const url = typeof config.url === "string" ? config.url.trim() : "";
+    const label = config.buttonLabel || element.textContent.trim();
+
     if (url) {
-      surveyLink.href = url;
-      surveyLink.textContent = label;
-      surveyLink.setAttribute("aria-disabled", "false");
-    } else {
-      surveyLink.href = "#survey";
-      surveyLink.textContent = "설문 링크 준비 중";
-      surveyLink.setAttribute("aria-disabled", "true");
+      element.href = url;
+      element.textContent = label;
+      element.setAttribute("aria-disabled", "false");
+      return;
     }
 
-    surveyLink.addEventListener("click", (event) => {
-      if (surveyLink.getAttribute("aria-disabled") === "true") {
-        event.preventDefault();
-      }
-    });
+    element.href = "#";
+    element.textContent = pendingText;
+    element.setAttribute("aria-disabled", "true");
+    element.addEventListener("click", preventDisabledClick);
+  }
+
+  function preventDisabledClick(event) {
+    const target = event.currentTarget;
+    if (target && target.getAttribute("aria-disabled") === "true") {
+      event.preventDefault();
+    }
   }
 
   function startClock() {
@@ -179,7 +187,6 @@
       .sort((a, b) => compareDatesDesc(a.date, b.date));
 
     const todayMeals = normalizedItems.filter((item) => item.date === today);
-
     mealSummary.innerHTML = "";
 
     if (todayMeals.length > 0) {
@@ -333,6 +340,325 @@
       details.append(summary, content);
       container.appendChild(details);
     });
+  }
+
+  function initializeChat() {
+    if (!chatMessages || !chatThreadList || !chatStatusText || !chatStatusBadge || !chatInput || !chatSubmit || !chatForm) {
+      return;
+    }
+
+    loadChatThreads();
+    ensureChatThread();
+    renderChatThreads();
+    renderActiveChat();
+
+    if (chatNewThreadButton) {
+      chatNewThreadButton.addEventListener("click", handleNewThread);
+    }
+
+    chatForm.addEventListener("submit", handleChatSubmit);
+    syncChatAvailability();
+  }
+
+  function loadChatThreads() {
+    try {
+      const raw = window.localStorage.getItem(CHAT_STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+
+      if (Array.isArray(parsed)) {
+        chatThreads = parsed.filter(isValidThread);
+      }
+    } catch (error) {
+      chatThreads = [];
+      console.error(error);
+    }
+  }
+
+  function saveChatThreads() {
+    window.localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(chatThreads));
+  }
+
+  function ensureChatThread() {
+    if (chatThreads.length === 0) {
+      const initialThread = createThread();
+      initialThread.messages.push({
+        role: "system",
+        content:
+          "예비군 훈련 관련 질문을 입력하면 서버 API 연결 후 답변을 받을 수 있습니다. 근거가 부족한 경우에는 관련 규정 확인이 필요하며, 필요 시 교관 또는 조교에게 문의하십시오.",
+      });
+      chatThreads = [initialThread];
+    }
+
+    if (!activeThreadId || !chatThreads.some((thread) => thread.id === activeThreadId)) {
+      activeThreadId = chatThreads[0].id;
+    }
+  }
+
+  function createThread() {
+    const now = new Date();
+    return {
+      id: `thread-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+      title: "새 대화",
+      updatedAt: now.toISOString(),
+      messages: [],
+    };
+  }
+
+  function isValidThread(thread) {
+    return thread
+      && typeof thread.id === "string"
+      && typeof thread.title === "string"
+      && typeof thread.updatedAt === "string"
+      && Array.isArray(thread.messages);
+  }
+
+  function handleNewThread() {
+    const thread = createThread();
+    thread.messages.push({
+      role: "system",
+      content:
+        "새 대화를 시작했습니다. 예비군 훈련, 복무, 연기, 불참, 복장, 행정 처리 등과 관련된 질문만 입력해 주세요.",
+    });
+
+    chatThreads.unshift(thread);
+    activeThreadId = thread.id;
+    saveChatThreads();
+    renderChatThreads();
+    renderActiveChat();
+  }
+
+  function renderChatThreads() {
+    chatThreadList.innerHTML = "";
+
+    const orderedThreads = [...chatThreads].sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
+
+    orderedThreads.forEach((thread) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = `chat-thread${thread.id === activeThreadId ? " is-active" : ""}`;
+      button.addEventListener("click", () => {
+        activeThreadId = thread.id;
+        renderChatThreads();
+        renderActiveChat();
+      });
+
+      const title = document.createElement("span");
+      title.className = "chat-thread__title";
+      title.textContent = thread.title;
+
+      const meta = document.createElement("span");
+      meta.className = "chat-thread__meta";
+      meta.textContent = formatRelativeTime(thread.updatedAt);
+
+      button.append(title, meta);
+      chatThreadList.appendChild(button);
+    });
+  }
+
+  function renderActiveChat() {
+    const thread = getActiveThread();
+
+    if (!thread) {
+      return;
+    }
+
+    chatMessages.innerHTML = "";
+
+    if (thread.messages.length === 0) {
+      chatMessages.appendChild(
+        createChatMessage("system", "질문을 입력하면 이곳에 대화가 표시됩니다.")
+      );
+    } else {
+      thread.messages.forEach((message) => {
+        chatMessages.appendChild(createChatMessage(message.role, message.content));
+      });
+    }
+
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function syncChatAvailability() {
+    const enabled = Boolean(chatConfig.enabled) && typeof chatConfig.endpoint === "string" && chatConfig.endpoint.trim();
+
+    chatInput.disabled = !enabled;
+    chatSubmit.disabled = !enabled;
+
+    if (enabled) {
+      chatStatusBadge.textContent = "연결 가능";
+      chatStatusText.textContent = "예비군 관련 질문을 입력하세요. 근거가 불분명하면 교관 또는 조교 문의 안내가 제공됩니다.";
+      chatInput.placeholder = chatConfig.placeholder || "예: 예비군 훈련 연기 신청은 어떻게 하나요?";
+      return;
+    }
+
+    chatStatusBadge.textContent = "연결 준비 중";
+    chatStatusText.textContent = "data/site-config.js에 chat.endpoint를 입력하면 챗을 사용할 수 있습니다.";
+    chatInput.placeholder = "챗 API 주소를 설정하면 질문을 입력할 수 있습니다.";
+  }
+
+  async function handleChatSubmit(event) {
+    event.preventDefault();
+
+    if (!chatConfig.enabled || !chatConfig.endpoint || !chatInput.value.trim()) {
+      return;
+    }
+
+    const thread = getActiveThread();
+
+    if (!thread) {
+      return;
+    }
+
+    const userMessage = chatInput.value.trim();
+    chatInput.value = "";
+
+    thread.messages.push({
+      role: "user",
+      content: userMessage,
+    });
+    thread.updatedAt = new Date().toISOString();
+
+    if (thread.title === "새 대화") {
+      thread.title = userMessage.slice(0, 22);
+    }
+
+    const loadingMessage = {
+      role: "system",
+      content: "답변을 불러오는 중입니다.",
+    };
+    thread.messages.push(loadingMessage);
+
+    saveChatThreads();
+    renderChatThreads();
+    renderActiveChat();
+
+    try {
+      const answer = await requestChatAnswer(thread);
+      replaceLastSystemMessage(thread, answer);
+    } catch (error) {
+      replaceLastSystemMessage(
+        thread,
+        "관련 규정 확인이 필요합니다. 필요 시 교관 또는 조교에게 문의하십시오."
+      );
+      console.error(error);
+    }
+
+    thread.updatedAt = new Date().toISOString();
+    saveChatThreads();
+    renderChatThreads();
+    renderActiveChat();
+  }
+
+  async function requestChatAnswer(thread) {
+    const systemPrompt = chatConfig.systemPrompt || "";
+    const conversationMessages = thread.messages.filter(
+      (message) => message.role === "user" || message.role === "assistant"
+    );
+    const messages = systemPrompt
+      ? [{ role: "system", content: systemPrompt }, ...conversationMessages]
+      : conversationMessages;
+
+    const payload = {
+      model: chatConfig.model || "exaone",
+      stream: false,
+      messages,
+    };
+
+    const response = await fetch(chatConfig.endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Chat request failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data && data.message && typeof data.message.content === "string") {
+      return data.message.content.trim();
+    }
+
+    if (typeof data.response === "string") {
+      return data.response.trim();
+    }
+
+    if (typeof data.answer === "string") {
+      return data.answer.trim();
+    }
+
+    return "관련 규정 확인이 필요합니다. 필요 시 교관 또는 조교에게 문의하십시오.";
+  }
+
+  function replaceLastSystemMessage(thread, content) {
+    let index = -1;
+
+    for (let i = thread.messages.length - 1; i >= 0; i -= 1) {
+      if (thread.messages[i].role === "system") {
+        index = i;
+        break;
+      }
+    }
+
+    if (index >= 0) {
+      thread.messages[index] = {
+        role: "assistant",
+        content,
+      };
+      return;
+    }
+
+    thread.messages.push({
+      role: "assistant",
+      content,
+    });
+  }
+
+  function getActiveThread() {
+    return chatThreads.find((thread) => thread.id === activeThreadId) || null;
+  }
+
+  function createChatMessage(role, content) {
+    const article = document.createElement("article");
+    article.className = `chat-message chat-message--${role}`;
+
+    const label = document.createElement("span");
+    label.className = "chat-message__role";
+    label.textContent = getRoleLabel(role);
+
+    const body = createRichText(content);
+
+    article.append(label, body);
+    return article;
+  }
+
+  function getRoleLabel(role) {
+    if (role === "user") {
+      return "질문";
+    }
+
+    if (role === "assistant") {
+      return "답변";
+    }
+
+    return "안내";
+  }
+
+  function formatRelativeTime(isoString) {
+    const date = new Date(isoString);
+
+    if (Number.isNaN(date.getTime())) {
+      return "방금 전";
+    }
+
+    return new Intl.DateTimeFormat("ko-KR", {
+      month: "numeric",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(date);
   }
 
   function createMealRow(label, valueNode) {

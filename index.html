@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="32사단 예비군 훈련 참가자를 위한 모바일 중심 디지털 안내 허브"
+      content="서산시 과학화 예비군 훈련장 안내와 예비군 법령 기반 챗을 제공하는 모바일 허브"
     />
-    <meta name="theme-color" content="#10233a" />
+    <meta name="theme-color" content="#11253e" />
     <link
       rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%230f2237'/%3E%3Ctext x='50%25' y='58%25' text-anchor='middle' font-size='28' font-family='Arial' font-weight='700' fill='white'%3E32%3C/text%3E%3C/svg%3E"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2311253e'/%3E%3Cpath d='M32 8 50 14v16c0 11-7 19-18 24C21 49 14 41 14 30V14Z' fill='%23ffffff' fill-opacity='.92'/%3E%3C/svg%3E"
     />
-    <title>예비군 훈련 안내</title>
+    <title>서산시 과학화 예비군 훈련장</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -20,43 +20,38 @@
 
     <div class="page-shell">
       <header class="hero">
-        <div class="hero__header">
-          <div class="hero__title-group">
-            <p class="hero__eyebrow">제32보병사단 디지털 안내 허브</p>
-            <h1 class="hero__title">예비군 훈련 안내</h1>
-            <p class="hero__subtitle">필요한 정보를 빠르게 확인하세요</p>
-          </div>
-
-          <div class="hero__symbols" aria-label="부대 상징">
-            <div class="hero__symbol-card">
-              <img
-                class="hero__symbol hero__symbol--division"
-                src="ROKA_32nd_Infantry_Division_Insignia.svg.png"
-                alt="32사단 부대 마크"
-              />
-            </div>
-            <div class="hero__symbol-card">
-              <img
-                class="hero__symbol hero__symbol--reserve"
-                src="lExcPgSTgV_HoWrsVffyyPGuWyaWdDps7O39XOhIPVj6lCpgS_gLVsGyZ6gbtq5XIXHq3o5mcjUjQArbaQT_DQ.svg"
-                alt="예비군 상징"
-              />
-            </div>
-          </div>
+        <div class="hero__watermark" aria-hidden="true">
+          <img src="lExcPgSTgV_HoWrsVffyyPGuWyaWdDps7O39XOhIPVj6lCpgS_gLVsGyZ6gbtq5XIXHq3o5mcjUjQArbaQT_DQ.svg" alt="" />
         </div>
 
-        <div class="hero__status">
-          <section class="status-box" aria-labelledby="current-time-title">
-            <p id="current-time-title" class="status-box__label">현재 시간</p>
-            <strong id="current-time" class="status-box__value">불러오는 중</strong>
-            <p id="current-date" class="status-box__meta">불러오는 중</p>
-          </section>
+        <div class="hero__main">
+          <div class="hero__title-wrap">
+            <img
+              class="hero__brand-mark"
+              src="ROKA_32nd_Infantry_Division_Insignia.svg.png"
+              alt="사단 마크"
+            />
 
-          <section class="status-box" aria-labelledby="current-weather-title">
-            <p id="current-weather-title" class="status-box__label">서산시 날씨</p>
-            <strong id="current-weather" class="status-box__value">불러오는 중</strong>
-            <p id="weather-meta" class="status-box__meta">실시간 기상 정보 연결 중</p>
-          </section>
+            <div class="hero__copy">
+              <p class="hero__eyebrow">Reservist Digital Guide</p>
+              <h1 class="hero__title">서산시 과학화 예비군 훈련장</h1>
+              <p class="hero__subtitle">훈련 참가자가 필요한 정보를 빠르게 확인할 수 있는 안내 허브</p>
+            </div>
+          </div>
+
+          <div class="hero__status">
+            <section class="status-box" aria-labelledby="current-time-title">
+              <p id="current-time-title" class="status-box__label">현재 시간</p>
+              <strong id="current-time" class="status-box__value">불러오는 중</strong>
+              <p id="current-date" class="status-box__meta">불러오는 중</p>
+            </section>
+
+            <section class="status-box" aria-labelledby="current-weather-title">
+              <p id="current-weather-title" class="status-box__label">서산시 날씨</p>
+              <strong id="current-weather" class="status-box__value">불러오는 중</strong>
+              <p id="weather-meta" class="status-box__meta">실시간 기상 정보 연결 중</p>
+            </section>
+          </div>
         </div>
 
         <nav class="menu-grid" aria-label="주요 메뉴">
@@ -104,15 +99,26 @@
             <strong>예비군 법령</strong>
           </a>
 
-          <a class="menu-card" href="#qa">
+          <a class="menu-card" href="#mental-evaluation">
             <span class="menu-card__icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" focusable="false">
                 <path
-                  d="M12 19h.01M8.2 8.7a3.8 3.8 0 1 1 6.2 3c-.9.8-1.9 1.4-1.9 3M5 4h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-5 3V6a2 2 0 0 1 2-2Z"
+                  d="M12 20a7 7 0 1 0-7-7c0 1.7.6 3.2 1.5 4.4L6 21l3.6-.5A6.9 6.9 0 0 0 12 20Zm-1-10h2v5h-2Zm0-3h2v2h-2Z"
                 />
               </svg>
             </span>
-            <strong>Q&amp;A</strong>
+            <strong>정신전력평가</strong>
+          </a>
+
+          <a class="menu-card" href="#chat">
+            <span class="menu-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path
+                  d="M4 5h16v11H8l-4 3V5Zm4 4h8M8 12h5"
+                />
+              </svg>
+            </span>
+            <strong>챗</strong>
           </a>
         </nav>
       </header>
@@ -122,13 +128,13 @@
           <div class="panel__heading">
             <div>
               <p class="panel__eyebrow">1. 설문</p>
-              <h2>설문 참여</h2>
+              <h2>훈련 설문</h2>
             </div>
             <span class="panel__tag">외부 링크</span>
           </div>
 
-          <div class="survey-box">
-            <p class="survey-box__title">훈련 설문 바로가기</p>
+          <div class="action-row">
+            <p class="action-row__title">훈련 설문 바로가기</p>
             <a
               id="survey-link"
               class="action-button"
@@ -137,7 +143,7 @@
               rel="noopener noreferrer"
               aria-disabled="true"
             >
-              설문 열기
+              설문 참여하기
             </a>
           </div>
         </section>
@@ -161,7 +167,7 @@
               <p class="panel__eyebrow">3. 공지사항</p>
               <h2>최신 공지</h2>
             </div>
-            <span class="panel__tag">최신순 자동 정렬</span>
+            <span class="panel__tag">최신순</span>
           </div>
 
           <div id="notice-list" class="stack-list" aria-live="polite"></div>
@@ -171,30 +177,94 @@
           <div class="panel__heading">
             <div>
               <p class="panel__eyebrow">4. 예비군 법령</p>
-              <h2>법령 및 기준</h2>
+              <h2>법령 및 행정 기준</h2>
             </div>
-            <span class="panel__tag">접기/펼치기</span>
+            <span class="panel__tag">접기 / 펼치기</span>
           </div>
 
+          <div class="panel__note">
+            예비군 관련 기준과 행정 안내를 확인할 수 있습니다. 상세 답변은 하단 챗에서 RAG 문서를 기준으로 안내하도록 구성할 수 있습니다.
+          </div>
           <div id="regulation-list" class="accordion-list" aria-live="polite"></div>
         </section>
 
-        <section id="qa" class="panel">
+        <section id="mental-evaluation" class="panel">
           <div class="panel__heading">
             <div>
-              <p class="panel__eyebrow">5. Q&amp;A</p>
-              <h2>자주 묻는 질문</h2>
+              <p class="panel__eyebrow">5. 정신전력평가</p>
+              <h2>평가 링크</h2>
             </div>
-            <span class="panel__tag">접기/펼치기</span>
+            <span class="panel__tag">준비 상태</span>
           </div>
 
-          <div id="qa-list" class="accordion-list" aria-live="polite"></div>
+          <div class="action-row action-row--muted">
+            <p class="action-row__title">정신전력평가 링크는 추후 추가 예정입니다.</p>
+            <a
+              id="mental-link"
+              class="action-button action-button--secondary"
+              href="#"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-disabled="true"
+            >
+              링크 준비 중
+            </a>
+          </div>
+        </section>
+
+        <section id="chat" class="panel chat-panel">
+          <div class="panel__heading">
+            <div>
+              <p class="panel__eyebrow">6. 챗</p>
+              <h2>서산시 과학화 예비군 챗</h2>
+            </div>
+            <span id="chat-status-badge" class="panel__tag">연결 준비 중</span>
+          </div>
+
+          <div class="chat-layout">
+            <aside class="chat-sidebar" aria-label="대화 목록">
+              <div class="chat-sidebar__head">
+                <h3>대화 목록</h3>
+                <button id="chat-new-thread" class="chat-side-button" type="button">새 대화</button>
+              </div>
+              <div id="chat-thread-list" class="chat-thread-list"></div>
+            </aside>
+
+            <div class="chat-main">
+              <div class="chat-intro">
+                <p class="chat-intro__title">예비군 법령 기반 안내</p>
+                <p class="chat-intro__body">
+                  예비군 훈련, 복무, 연기, 불참, 복장, 행정 처리 등과 관련된 질문만 답변하도록 설계합니다.
+                  관련 규정 확인이 필요할 경우 교관 또는 조교에게 문의하도록 안내합니다.
+                </p>
+              </div>
+
+              <div id="chat-messages" class="chat-messages" aria-live="polite"></div>
+
+              <form id="chat-form" class="chat-composer">
+                <label class="chat-composer__label" for="chat-input">질문 입력</label>
+                <textarea
+                  id="chat-input"
+                  rows="4"
+                  placeholder="예: 예비군 훈련 연기 신청은 어떻게 하나요?"
+                ></textarea>
+                <div class="chat-composer__actions">
+                  <p id="chat-status-text" class="chat-status-text">
+                    챗 API 주소를 설정하면 이 영역에서 답변을 받을 수 있습니다.
+                  </p>
+                  <button id="chat-submit" class="action-button chat-submit" type="submit">
+                    전송
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
         </section>
       </main>
 
       <footer class="footer">
-        <p>32사단 예비군 훈련 안내용 정적 웹페이지</p>
-        <p>GitHub Pages에 바로 업로드할 수 있는 순수 HTML/CSS/JavaScript 구조입니다.</p>
+        <p>서산시 과학화 예비군 훈련장 안내용 정적 웹페이지</p>
+        <p>운영 데이터는 `data` 폴더에서 수정하고, 챗 서버는 별도 프로세스로 연결합니다.</p>
       </footer>
     </div>
 
@@ -202,7 +272,6 @@
     <script src="data/meals.js"></script>
     <script src="data/notices.js"></script>
     <script src="data/regulations.js"></script>
-    <script src="data/qa.js"></script>
     <script src="script.js"></script>
   </body>
 </html>
