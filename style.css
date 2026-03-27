@@ -132,9 +132,6 @@ textarea {
   width: 68px;
   height: 68px;
   object-fit: contain;
-  padding: 4px;
-  background: linear-gradient(180deg, rgba(17, 37, 62, 0.05), rgba(17, 37, 62, 0));
-  border: 1px solid var(--line);
 }
 
 .hero__copy {
@@ -224,6 +221,15 @@ textarea {
   background: linear-gradient(180deg, rgba(17, 37, 62, 0.95), rgba(12, 27, 47, 0.94));
 }
 
+.menu-card.is-active {
+  border-color: var(--blue);
+  background: #eef4fa;
+}
+
+.menu-card--survey.is-active {
+  background: linear-gradient(180deg, rgba(17, 37, 62, 0.95), rgba(12, 27, 47, 0.94));
+}
+
 .menu-card:hover,
 .menu-card:focus-visible {
   transform: translateY(-1px);
@@ -263,9 +269,16 @@ a:focus-visible {
 }
 
 .content {
-  display: grid;
-  gap: 14px;
+  display: block;
   margin-top: 14px;
+}
+
+.content-panel + .content-panel {
+  margin-top: 14px;
+}
+
+.content-panel[hidden] {
+  display: none !important;
 }
 
 .panel {

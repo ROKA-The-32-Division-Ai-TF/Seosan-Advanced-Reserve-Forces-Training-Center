@@ -21,10 +21,13 @@
   const mealList = document.querySelector("#meal-list");
   const noticeList = document.querySelector("#notice-list");
   const regulationList = document.querySelector("#regulation-list");
+  const sectionLinks = Array.from(document.querySelectorAll("[data-section-link]"));
+  const sectionPanels = Array.from(document.querySelectorAll("[data-section-panel]"));
 
   setupMeta(siteConfig);
   setupExternalLink(surveyLink, siteConfig.survey || {}, "설문 링크 준비 중");
   setupExternalLink(mentalLink, siteConfig.mentalEvaluation || {}, "링크 준비 중");
+  initializeSectionNavigation();
   startClock();
   fetchWeather(siteConfig.weather || {});
   renderMeals(mealsData);
@@ -75,6 +78,55 @@
     element.addEventListener("click", (event) => {
       event.preventDefault();
     });
+  }
+
+  function initializeSectionNavigation() {
+    if (sectionLinks.length === 0 || sectionPanels.length === 0) {
+      return;
+    }
+
+    sectionLinks.forEach((link) => {
+      link.addEventListener("click", (event) => {
+        const targetId = link.dataset.sectionLink;
+
+        if (!targetId) {
+          return;
+        }
+
+        event.preventDefault();
+        activateSection(targetId, true);
+      });
+    });
+
+    const initialHash = window.location.hash.replace("#", "");
+    const initialSection = sectionPanels.some((panel) => panel.id === initialHash) ? initialHash : "survey";
+    activateSection(initialSection, false);
+  }
+
+  function activateSection(sectionId, updateHash) {
+    sectionPanels.forEach((panel) => {
+      const isActive = panel.id === sectionId;
+      panel.hidden = !isActive;
+      panel.classList.toggle("is-active", isActive);
+    });
+
+    sectionLinks.forEach((link) => {
+      const isActive = link.dataset.sectionLink === sectionId;
+      link.classList.toggle("is-active", isActive);
+    });
+
+    if (updateHash) {
+      window.history.replaceState(null, "", `#${sectionId}`);
+    }
+
+    const activePanel = document.getElementById(sectionId);
+
+    if (updateHash && activePanel) {
+      activePanel.scrollIntoView({
+        block: "start",
+        behavior: "smooth",
+      });
+    }
   }
 
   function startClock() {

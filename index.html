@@ -55,7 +55,7 @@
         </div>
 
         <nav class="menu-grid" aria-label="주요 메뉴">
-          <a class="menu-card menu-card--survey" href="#survey">
+          <a class="menu-card menu-card--survey is-active" href="#survey" data-section-link="survey">
             <span class="menu-card__icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" focusable="false">
                 <path
@@ -66,7 +66,7 @@
             <strong>설문</strong>
           </a>
 
-          <a class="menu-card" href="#meals">
+          <a class="menu-card" href="#meals" data-section-link="meals">
             <span class="menu-card__icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" focusable="false">
                 <path
@@ -77,7 +77,7 @@
             <strong>오늘 식단</strong>
           </a>
 
-          <a class="menu-card" href="#notices">
+          <a class="menu-card" href="#notices" data-section-link="notices">
             <span class="menu-card__icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" focusable="false">
                 <path
@@ -88,7 +88,7 @@
             <strong>공지사항</strong>
           </a>
 
-          <a class="menu-card" href="#regulations">
+          <a class="menu-card" href="#regulations" data-section-link="regulations">
             <span class="menu-card__icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" focusable="false">
                 <path
@@ -99,7 +99,7 @@
             <strong>예비군 법령</strong>
           </a>
 
-          <a class="menu-card" href="#mental-evaluation">
+          <a class="menu-card" href="#mental-evaluation" data-section-link="mental-evaluation">
             <span class="menu-card__icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" focusable="false">
                 <path
@@ -110,7 +110,7 @@
             <strong>정신전력평가</strong>
           </a>
 
-          <a class="menu-card" href="#chat">
+          <a class="menu-card" href="#chat" data-section-link="chat">
             <span class="menu-card__icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" focusable="false">
                 <path
@@ -124,7 +124,7 @@
       </header>
 
       <main id="main-content" class="content">
-        <section id="survey" class="panel panel--accent">
+        <section id="survey" class="panel panel--accent content-panel is-active" data-section-panel>
           <div class="panel__heading">
             <div>
               <p class="panel__eyebrow">1. 설문</p>
@@ -148,7 +148,7 @@
           </div>
         </section>
 
-        <section id="meals" class="panel">
+        <section id="meals" class="panel content-panel" data-section-panel hidden>
           <div class="panel__heading">
             <div>
               <p class="panel__eyebrow">2. 오늘 식단</p>
@@ -161,7 +161,7 @@
           <div id="meal-list" class="stack-list" aria-live="polite"></div>
         </section>
 
-        <section id="notices" class="panel">
+        <section id="notices" class="panel content-panel" data-section-panel hidden>
           <div class="panel__heading">
             <div>
               <p class="panel__eyebrow">3. 공지사항</p>
@@ -173,7 +173,7 @@
           <div id="notice-list" class="stack-list" aria-live="polite"></div>
         </section>
 
-        <section id="regulations" class="panel">
+        <section id="regulations" class="panel content-panel" data-section-panel hidden>
           <div class="panel__heading">
             <div>
               <p class="panel__eyebrow">4. 예비군 법령</p>
@@ -188,7 +188,7 @@
           <div id="regulation-list" class="accordion-list" aria-live="polite"></div>
         </section>
 
-        <section id="mental-evaluation" class="panel">
+        <section id="mental-evaluation" class="panel content-panel" data-section-panel hidden>
           <div class="panel__heading">
             <div>
               <p class="panel__eyebrow">5. 정신전력평가</p>
@@ -212,7 +212,7 @@
           </div>
         </section>
 
-        <section id="chat" class="panel chat-panel">
+        <section id="chat" class="panel chat-panel content-panel" data-section-panel hidden>
           <div class="panel__heading">
             <div>
               <p class="panel__eyebrow">6. 챗</p>
