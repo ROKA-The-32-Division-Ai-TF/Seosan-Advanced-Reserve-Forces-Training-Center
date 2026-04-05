@@ -122,32 +122,29 @@
         <div class="dashboard-card__heading">
           <div>
             <p class="dashboard-card__eyebrow">식사표</p>
-            <h2>오늘 식단 관리</h2>
+            <h2>식단 이미지 관리</h2>
           </div>
         </div>
 
         <form id="meal-form" class="stack-form">
           <input id="meal-id" type="hidden" />
-
-          <div class="responsive-grid">
-            <label class="field">
-              <span>날짜</span>
-              <input id="meal-date" type="date" required />
-            </label>
-            <label class="field">
-              <span>구분</span>
-              <input id="meal-type" type="text" placeholder="예: 중식" required />
-            </label>
-          </div>
+          <input id="meal-existing-image-path" type="hidden" />
 
           <label class="field">
-            <span>메뉴</span>
-            <textarea id="meal-menu-text" rows="5" placeholder="한 줄에 한 메뉴씩 입력"></textarea>
+            <span>날짜</span>
+            <input id="meal-date" type="date" required />
           </label>
 
           <label class="field">
+            <span>식단표 이미지</span>
+            <input id="meal-image" type="file" accept="image/*" />
+          </label>
+
+          <p id="meal-image-hint" class="inline-message">이미지를 등록하면 공개 페이지에 그대로 표시됩니다.</p>
+
+          <label class="field">
             <span>비고</span>
-            <textarea id="meal-note" rows="3" placeholder="배식 시간 또는 안내 문구"></textarea>
+            <textarea id="meal-note" rows="3" placeholder="예: 점심 배식 전 확인"></textarea>
           </label>
 
           <div class="button-row">

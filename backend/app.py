@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import secrets
 import sqlite3
 from contextlib import contextmanager
+from pathlib import Path
 from typing import Any, Optional
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -87,15 +89,9 @@ class EmergencyContactPayload(BaseModel):
     sortOrder: int = Field(default=0, ge=0, le=9999)
 
 
-class MealPayload(BaseModel):
-    id: Optional[str] = None
-    date: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")
-    mealType: str = Field(min_length=2, max_length=40)
-    menu: list[str] = Field(default_factory=list)
-    note: str = Field(max_length=200, default="")
-
-
 settings = load_settings()
+settings.public_assets_dir.mkdir(parents=True, exist_ok=True)
+settings.public_meal_images_dir.mkdir(parents=True, exist_ok=True)
 app = FastAPI(title="Reserve Admin Backend")
 app.add_middleware(
     SessionMiddleware,
@@ -104,6 +100,7 @@ app.add_middleware(
     https_only=False,
 )
 app.mount("/static", StaticFiles(directory=settings.static_dir), name="static")
+app.mount("/assets", StaticFiles(directory=settings.public_assets_dir), name="assets")
 templates = Jinja2Templates(directory=str(settings.templates_dir))
 scheduler: Optional[BackgroundScheduler] = None
 
@@ -354,11 +351,46 @@ def remove_contact(contact_id: str, request: Request) -> dict[str, Any]:
 
 
 @app.post("/api/admin/meals", response_class=JSONResponse)
-def save_public_meal(payload: MealPayload, request: Request) -> dict[str, Any]:
+async def save_public_meal(
+    request: Request,
+    id: Optional[str] = Form(default=None),
+    date: str = Form(pattern=r"^\d{4}-\d{2}-\d{2}$"),
+    note: str = Form(default=""),
+    existingImagePath: str = Form(default=""),
+    image: Optional[UploadFile] = File(default=None),
+) -> dict[str, Any]:
     require_user(request)
+    new_image_path = await save_uploaded_meal_image(image) if image and image.filename else ""
+    final_image_path = new_image_path or existingImagePath.strip()
+
+    if not final_image_path:
+        raise HTTPException(status_code=400, detail="식단표 이미지를 먼저 등록해 주세요.")
+
     with db_connection() as connection:
-        meals = save_meal(connection, payload.model_dump())
+        previous_image_path = ""
+        if id:
+            previous_meal = next((item for item in get_meals(connection) if item["id"] == id), None)
+            if previous_meal:
+                previous_image_path = str(previous_meal.get("imagePath") or "").strip()
+
+        meals = save_meal(
+            connection,
+            {
+                "id": id,
+                "date": date,
+                "imagePath": final_image_path,
+                "note": note,
+                "mealType": "",
+                "menu": [],
+            },
+        )
         changed_paths = sync_public_files(connection, ["meals"])
+        if new_image_path:
+            changed_paths.append(resolve_public_path(new_image_path))
+        if previous_image_path and previous_image_path != final_image_path:
+            old_image_path = resolve_public_path(previous_image_path)
+            remove_public_file_if_exists(old_image_path)
+            changed_paths.append(old_image_path)
         publish_result = maybe_publish_public_site(settings, changed_paths)
 
     return {
@@ -373,8 +405,13 @@ def save_public_meal(payload: MealPayload, request: Request) -> dict[str, Any]:
 def remove_meal(meal_id: str, request: Request) -> dict[str, Any]:
     require_user(request)
     with db_connection() as connection:
+        previous_meal = next((item for item in get_meals(connection) if item["id"] == meal_id), None)
         meals = delete_meal(connection, meal_id)
         changed_paths = sync_public_files(connection, ["meals"])
+        if previous_meal and previous_meal.get("imagePath"):
+            old_image_path = resolve_public_path(str(previous_meal["imagePath"]))
+            remove_public_file_if_exists(old_image_path)
+            changed_paths.append(old_image_path)
         publish_result = maybe_publish_public_site(settings, changed_paths)
 
     return {"ok": True, "meals": meals, "publish": publish_result}
@@ -450,3 +487,34 @@ def require_user(request: Request) -> dict[str, Any]:
     if not user:
         raise HTTPException(status_code=401, detail="로그인이 필요합니다.")
     return user
+
+
+async def save_uploaded_meal_image(upload: UploadFile) -> str:
+    filename = (upload.filename or "").strip()
+    if not filename:
+        return ""
+
+    extension = Path(filename).suffix.lower()
+    if extension not in {".jpg", ".jpeg", ".png", ".webp", ".gif"}:
+        raise HTTPException(status_code=400, detail="식단표 이미지는 jpg, jpeg, png, webp, gif 형식만 업로드할 수 있습니다.")
+
+    settings.public_meal_images_dir.mkdir(parents=True, exist_ok=True)
+    safe_stem = "".join(char for char in Path(filename).stem if char.isalnum() or char in {"-", "_"})[:20] or "meal"
+    target_name = f"{safe_stem}_{secrets.token_hex(6)}{extension}"
+    target_path = settings.public_meal_images_dir / target_name
+    content = await upload.read()
+
+    if not content:
+        raise HTTPException(status_code=400, detail="업로드한 이미지가 비어 있습니다.")
+
+    target_path.write_bytes(content)
+    return str(target_path.relative_to(settings.repo_root)).replace("\\", "/")
+
+
+def resolve_public_path(relative_path: str) -> Path:
+    return (settings.repo_root / relative_path).resolve()
+
+
+def remove_public_file_if_exists(path: Path) -> None:
+    if path.exists() and path.is_file():
+        path.unlink()

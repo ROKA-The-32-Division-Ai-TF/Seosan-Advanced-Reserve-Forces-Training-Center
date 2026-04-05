@@ -139,10 +139,11 @@ def generate_survey_summary(settings: Settings) -> dict[str, Any]:
             summary_markdown="## 대기 중\n- 아직 수집된 설문 응답이 없습니다.",
         )
 
-    if not settings.ollama_model:
+    model = resolve_ollama_model(settings.ollama_model, settings.ollama_api_url)
+    if not model:
         return summary_payload(
             status="error",
-            message="OLLAMA_MODEL이 설정되지 않았습니다.",
+            message="사용 가능한 Ollama 모델을 찾지 못했습니다.",
             total_responses=total_responses,
             analyzed_responses=min(total_responses, MAX_ANALYSIS_ROWS),
             latest_response_at=latest_response_at,
@@ -150,7 +151,7 @@ def generate_survey_summary(settings: Settings) -> dict[str, Any]:
             excluded_columns=excluded_columns,
             summary_markdown=(
                 "## 설정 필요\n"
-                "- 백엔드 환경 변수 `OLLAMA_MODEL`을 설정해 주세요."
+                "- `OLLAMA_MODEL`을 설정하거나 EXAONE 모델이 실행 가능한지 확인해 주세요."
             ),
         )
 
@@ -158,7 +159,7 @@ def generate_survey_summary(settings: Settings) -> dict[str, Any]:
     prompt = build_summary_prompt(rows_for_analysis, included_columns, total_responses)
     summary_markdown = request_ollama_markdown(
         api_url=settings.ollama_api_url,
-        model=settings.ollama_model,
+        model=model,
         system_prompt=SUMMARY_SYSTEM_PROMPT,
         user_prompt=prompt,
     )
@@ -176,9 +177,9 @@ def generate_survey_summary(settings: Settings) -> dict[str, Any]:
 
 
 def create_notice_draft(settings: Settings, instruction: str) -> dict[str, Any]:
-    model = settings.notice_draft_model or settings.ollama_model
+    model = resolve_ollama_model(settings.notice_draft_model or settings.ollama_model, settings.ollama_api_url)
     if not model:
-        raise RuntimeError("NOTICE_DRAFT_MODEL 또는 OLLAMA_MODEL 설정이 필요합니다.")
+        raise RuntimeError("사용 가능한 Ollama 모델을 찾지 못했습니다. EXAONE 모델 상태를 확인해 주세요.")
 
     payload = {
         "model": model,
@@ -195,11 +196,7 @@ def create_notice_draft(settings: Settings, instruction: str) -> dict[str, Any]:
     if not content:
         raise RuntimeError("AI 초안 응답이 비어 있습니다.")
 
-    try:
-        parsed = json.loads(content)
-    except json.JSONDecodeError as exc:
-        raise RuntimeError("AI 초안 결과를 JSON으로 해석하지 못했습니다.") from exc
-
+    parsed = parse_notice_draft_content(content)
     title = str(parsed.get("title") or "공지 초안").strip()
     body = str(parsed.get("content") or "").strip()
     is_important = bool(parsed.get("isImportant"))
@@ -221,7 +218,7 @@ def maybe_publish_public_site(settings: Settings, changed_files: list[Path]) -> 
     relative_files = [str(path.relative_to(settings.repo_root)) for path in changed_files]
     try:
         subprocess.run(
-            ["git", "add", *relative_files],
+            ["git", "add", "-A", "--", *relative_files],
             cwd=settings.repo_root,
             check=True,
             capture_output=True,
@@ -256,6 +253,106 @@ def maybe_publish_public_site(settings: Settings, changed_files: list[Path]) -> 
     except subprocess.CalledProcessError as exc:
         stderr = exc.stderr.strip() if exc.stderr else "Git publish failed."
         return {"enabled": True, "published": False, "message": stderr}
+
+
+def resolve_ollama_model(configured_model: str, api_url: str) -> str:
+    if configured_model:
+        return configured_model
+
+    available = find_ollama_models(api_url)
+
+    for candidate in available:
+        lowered = candidate.lower()
+        if "exaone" in lowered and "general" in lowered:
+            return candidate
+
+    for candidate in available:
+        if "exaone" in candidate.lower():
+            return candidate
+
+    return available[0] if available else ""
+
+
+def find_ollama_models(api_url: str) -> list[str]:
+    tags_url = build_ollama_tags_url(api_url)
+    req = request.Request(tags_url, headers={"Content-Type": "application/json"}, method="GET")
+    try:
+        with request.urlopen(req, timeout=15) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except error.URLError:
+        return []
+
+    models = payload.get("models") or []
+    names = []
+    for item in models:
+        name = str(item.get("name") or item.get("model") or "").strip()
+        if name:
+            names.append(name)
+    return names
+
+
+def build_ollama_tags_url(api_url: str) -> str:
+    parsed = parse.urlparse(api_url)
+    path = parsed.path or "/api/chat"
+    if path.endswith("/api/chat"):
+        path = path[:-9] + "/api/tags"
+    elif path.endswith("/api/generate"):
+        path = path[:-13] + "/api/tags"
+    else:
+        path = "/api/tags"
+    return parse.urlunparse(parsed._replace(path=path, params="", query="", fragment=""))
+
+
+def parse_notice_draft_content(content: str) -> dict[str, Any]:
+    cleaned = content.strip()
+    if cleaned.startswith("```"):
+        cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned)
+        cleaned = re.sub(r"\s*```$", "", cleaned)
+
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        pass
+
+    important_match = re.search(r'"isImportant"\s*:\s*(true|false)', cleaned, re.I)
+    title = extract_last_jsonish_field(cleaned, "title", ["content", "isImportant", "date"]) or "공지 초안"
+    body = extract_last_jsonish_field(cleaned, "content", ["isImportant", "date", "title"])
+    if not body:
+        body = decode_relaxed_text(cleaned)
+
+    is_important = bool(important_match and important_match.group(1).lower() == "true")
+
+    return {
+        "title": title,
+        "content": body,
+        "isImportant": is_important,
+    }
+
+
+def decode_json_fragment(value: str) -> str:
+    try:
+        return json.loads(f'"{value}"')
+    except json.JSONDecodeError:
+        return decode_relaxed_text(value)
+
+
+def decode_relaxed_text(value: str) -> str:
+    text = str(value or "").strip()
+    text = text.replace("\\n", "\n").replace("\\r", "")
+    text = text.replace('\\"', '"').replace("\\\\", "\\")
+    return text.strip()
+
+
+def extract_last_jsonish_field(text: str, key: str, next_keys: list[str]) -> str:
+    matches = list(re.finditer(rf'"{re.escape(key)}"\s*:\s*"', text, re.S))
+    if not matches:
+        return ""
+
+    start = matches[-1].end()
+    next_key_pattern = "|".join(re.escape(value) for value in next_keys)
+    end_match = re.search(rf'"\s*,\s*"(?:{next_key_pattern})"', text[start:], re.S)
+    end = start + end_match.start() if end_match else len(text)
+    return decode_relaxed_text(text[start:end])
 
 
 def summary_payload(

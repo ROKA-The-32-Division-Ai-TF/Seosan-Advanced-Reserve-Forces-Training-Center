@@ -387,8 +387,9 @@ def export_meals_js(meals: list[dict[str, Any]], target_path: Path) -> None:
             [
                 "  {",
                 f"    date: {json.dumps(meal['date'], ensure_ascii=False)},",
-                f"    mealType: {json.dumps(meal['mealType'], ensure_ascii=False)},",
+                f"    mealType: {json.dumps(meal.get('mealType', ''), ensure_ascii=False)},",
                 f"    menu: {menu_json},",
+                f"    imagePath: {json.dumps(meal.get('imagePath', ''), ensure_ascii=False)},",
                 f"    note: {json.dumps(meal.get('note', ''), ensure_ascii=False)},",
                 "  },",
             ]
@@ -474,6 +475,7 @@ def normalize_meals(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "date": str(item.get("date") or "").strip(),
                 "mealType": str(item.get("mealType") or "").strip(),
                 "menu": [str(value).strip() for value in menu if str(value).strip()],
+                "imagePath": str(item.get("imagePath") or "").strip(),
                 "note": str(item.get("note") or "").strip(),
             }
         )
@@ -497,6 +499,7 @@ def build_meal(payload: dict[str, Any], meal_id: str) -> dict[str, Any]:
         "date": str(payload.get("date") or "").strip(),
         "mealType": str(payload.get("mealType") or "").strip(),
         "menu": [str(value).strip() for value in (payload.get("menu") or []) if str(value).strip()],
+        "imagePath": str(payload.get("imagePath") or "").strip(),
         "note": str(payload.get("note") or "").strip(),
     }
 

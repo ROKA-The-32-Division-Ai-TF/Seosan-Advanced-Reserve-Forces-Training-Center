@@ -38,9 +38,10 @@
     contactList: document.querySelector("#contact-list"),
     mealForm: document.querySelector("#meal-form"),
     mealId: document.querySelector("#meal-id"),
+    mealExistingImagePath: document.querySelector("#meal-existing-image-path"),
     mealDate: document.querySelector("#meal-date"),
-    mealType: document.querySelector("#meal-type"),
-    mealMenuText: document.querySelector("#meal-menu-text"),
+    mealImage: document.querySelector("#meal-image"),
+    mealImageHint: document.querySelector("#meal-image-hint"),
     mealNote: document.querySelector("#meal-note"),
     mealReset: document.querySelector("#meal-reset"),
     mealMessage: document.querySelector("#meal-message"),
@@ -196,15 +197,21 @@
     event.preventDefault();
     try {
       refs.mealMessage.textContent = "식사표를 저장하는 중입니다.";
+      const formData = new FormData();
+      formData.append("id", refs.mealId.value || "");
+      formData.append("date", refs.mealDate.value);
+      formData.append("note", refs.mealNote.value.trim());
+      formData.append("existingImagePath", refs.mealExistingImagePath.value || "");
+
+      const file = refs.mealImage.files && refs.mealImage.files[0];
+      if (file) {
+        formData.append("image", file);
+      }
+
       const data = await api("/api/admin/meals", {
         method: "POST",
-        body: JSON.stringify({
-          id: refs.mealId.value || null,
-          date: refs.mealDate.value,
-          mealType: refs.mealType.value.trim(),
-          menu: parseMenuLines(refs.mealMenuText.value),
-          note: refs.mealNote.value.trim(),
-        }),
+        body: formData,
+        isFormData: true,
       });
       state.meals = data.meals || [];
       renderMeals();
@@ -345,11 +352,12 @@
       (meal) => `
         <div class="notice-item__title-row">
           <div>
-            <h3>${escapeHtml(meal.mealType)}</h3>
+            <h3>식단표 이미지</h3>
             <p class="notice-item__meta">${escapeHtml(meal.date)}</p>
           </div>
         </div>
-        <div class="notice-item__content">${escapeHtml((meal.menu || []).join("\n"))}${meal.note ? `<br /><br />${escapeHtml(meal.note)}` : ""}</div>
+        ${meal.imagePath ? `<img class="notice-item__image" src="${escapeHtml(toAdminAssetUrl(meal.imagePath))}" alt="식단표 이미지" />` : ""}
+        <div class="notice-item__content">${escapeHtml(meal.note || "비고 없음")}</div>
         <div class="notice-item__actions">
           <button class="mini-button" type="button" data-action="edit">수정</button>
           <button class="mini-button mini-button--danger" type="button" data-action="delete">삭제</button>
@@ -401,9 +409,12 @@
   function loadMeal(meal) {
     refs.mealId.value = meal.id || "";
     refs.mealDate.value = meal.date || todayString();
-    refs.mealType.value = meal.mealType || "";
-    refs.mealMenuText.value = (meal.menu || []).join("\n");
+    refs.mealExistingImagePath.value = meal.imagePath || "";
+    refs.mealImage.value = "";
     refs.mealNote.value = meal.note || "";
+    refs.mealImageHint.textContent = meal.imagePath
+      ? `현재 이미지: ${meal.imagePath}`
+      : "이미지를 등록하면 공개 페이지에 그대로 표시됩니다.";
     refs.mealMessage.textContent = "기존 식사표를 불러왔습니다.";
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -471,7 +482,9 @@
   function resetMealForm() {
     refs.mealForm.reset();
     refs.mealId.value = "";
+    refs.mealExistingImagePath.value = "";
     refs.mealDate.value = todayString();
+    refs.mealImageHint.textContent = "이미지를 등록하면 공개 페이지에 그대로 표시됩니다.";
     refs.mealMessage.textContent = "새 식사표 입력 상태로 초기화했습니다.";
   }
 
@@ -484,11 +497,15 @@
   }
 
   async function api(url, options = {}) {
+    const { isFormData = false, headers = {}, ...rest } = options;
     const response = await fetch(url, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-      ...options,
+      headers: isFormData
+        ? headers
+        : {
+            "Content-Type": "application/json",
+            ...headers,
+          },
+      ...rest,
     });
 
     const data = await response.json().catch(() => ({}));
@@ -564,11 +581,17 @@
     return document.createElement("section");
   }
 
-  function parseMenuLines(text) {
-    return String(text)
-      .split(/\n+/)
-      .map((value) => value.trim())
-      .filter(Boolean);
+  function toAdminAssetUrl(path) {
+    if (!path) {
+      return "";
+    }
+    if (/^https?:\/\//i.test(path)) {
+      return path;
+    }
+    if (path.startsWith("/")) {
+      return path;
+    }
+    return `/${path}`;
   }
 
   function todayString() {

@@ -291,6 +291,13 @@ textarea {
   white-space: pre-wrap;
 }
 
+.notice-item__image {
+  width: 100%;
+  margin-top: 12px;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+
 .notice-item__actions {
   display: flex;
   gap: 8px;

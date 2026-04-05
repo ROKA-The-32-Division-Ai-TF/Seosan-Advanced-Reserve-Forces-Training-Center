@@ -18,6 +18,8 @@ class Settings:
     ollama_model: str
     notice_draft_model: str
     summary_sheet_csv_url: str
+    public_assets_dir: Path
+    public_meal_images_dir: Path
     public_notices_path: Path
     public_meals_path: Path
     public_contacts_path: Path
@@ -45,6 +47,12 @@ def load_settings() -> Settings:
         ollama_model=os.getenv("OLLAMA_MODEL", "").strip(),
         notice_draft_model=os.getenv("NOTICE_DRAFT_MODEL", "").strip(),
         summary_sheet_csv_url=os.getenv("GOOGLE_SHEETS_CSV_URL", "").strip(),
+        public_assets_dir=Path(
+            os.getenv("PUBLIC_ASSETS_DIR", repo_root / "assets")
+        ).resolve(),
+        public_meal_images_dir=Path(
+            os.getenv("PUBLIC_MEAL_IMAGES_DIR", repo_root / "assets" / "meal-images")
+        ).resolve(),
         public_notices_path=Path(
             os.getenv("PUBLIC_NOTICES_PATH", repo_root / "data" / "notices.js")
         ).resolve(),

@@ -272,12 +272,11 @@
     mealSummary.innerHTML = "";
 
     if (todayMeals.length > 0) {
-      const mealTypes = todayMeals.map((item) => item.mealType).filter(Boolean).join(" · ");
       mealSummary.appendChild(
         createStatusCard(
           "오늘 등록된 식단",
-          mealTypes || "오늘 식단이 등록되어 있습니다.",
-          "아래 항목에서 메뉴와 비고를 확인하세요."
+          "오늘 식단표가 등록되어 있습니다.",
+          "아래 이미지를 눌러 크게 확인할 수 있습니다."
         )
       );
     } else {
@@ -322,13 +321,20 @@
 
       const title = document.createElement("h3");
       title.className = "stack-item__title";
-      title.textContent = item.mealType || "식단 안내";
+      title.textContent = "식단표 이미지";
 
       const details = document.createElement("div");
       details.className = "meal-details";
 
-      details.appendChild(createMealRow("메뉴", createMealMenu(item.menu)));
-      details.appendChild(createMealRow("비고", createSimpleText(item.note || "비고 없음")));
+      if (item.imagePath) {
+        details.appendChild(createMealRow("식단표", createMealImage(item.imagePath)));
+      } else {
+        details.appendChild(createMealRow("메뉴", createMealMenu(item.menu)));
+      }
+
+      if (item.note) {
+        details.appendChild(createMealRow("비고", createSimpleText(item.note)));
+      }
 
       article.append(meta, title, details);
       mealList.appendChild(article);
@@ -494,6 +500,22 @@
     });
 
     return list;
+  }
+
+  function createMealImage(imagePath) {
+    const link = document.createElement("a");
+    link.className = "meal-image-link";
+    link.href = imagePath;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+
+    const image = document.createElement("img");
+    image.className = "meal-image";
+    image.src = imagePath;
+    image.alt = "오늘 식단표 이미지";
+
+    link.appendChild(image);
+    return link;
   }
 
   function createSimpleText(text) {

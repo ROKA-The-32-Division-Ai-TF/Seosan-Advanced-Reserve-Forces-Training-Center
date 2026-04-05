@@ -76,7 +76,7 @@ chatbot: {
 - 공개 사이트 운영 시간 설정
 - 공지사항 작성 / 수정 / 삭제
 - 긴급연락처 작성 / 수정 / 삭제
-- 식사표 작성 / 수정 / 삭제
+- 식단표 이미지 등록 / 수정 / 삭제
 - EXAONE(Ollama) 기반 공지 초안 생성
 - 설문 요약 조회
 - 다른 관리자 계정 추가
@@ -157,11 +157,13 @@ python3 -m backend.manage_admin create-user admin "관리자 이름"
 ```js
 {
   date: "2026-04-05",
-  mealType: "중식",
-  menu: ["백미밥", "국", "반찬 1"],
+  imagePath: "assets/meal-images/meal_파일명.png",
   note: "배식 시간 또는 참고 문구",
 }
 ```
+
+- 관리자 페이지에서는 식단표 이미지를 바로 업로드하면 됩니다.
+- 공개 페이지에서는 이미지를 그대로 표시합니다.
 
 ## 긴급연락처 수정 형식
 
@@ -180,7 +182,7 @@ python3 -m backend.manage_admin create-user admin "관리자 이름"
 
 ## 설문 자동 요약
 
-백엔드가 매일 `15:30 Asia/Seoul`에 Google Sheets 응답을 읽고 Ollama로 요약합니다.
+백엔드가 매일 `15:30 Asia/Seoul`에 Google Sheets 응답 시트를 CSV로 읽고 Ollama로 요약합니다.
 
 필수 환경 변수:
 
@@ -190,6 +192,9 @@ GOOGLE_SHEETS_CSV_URL=https://docs.google.com/spreadsheets/d/시트ID/export?for
 OLLAMA_API_URL=http://127.0.0.1:11434/api/chat
 OLLAMA_MODEL=exaone3.5
 ```
+
+- 이 로직은 Google Forms API가 아니라 `응답이 연결된 Google Sheets`의 CSV 주소를 사용합니다.
+- 일반 시트 주소를 넣어도 내부에서 가능한 경우 CSV 주소 형태로 자동 변환합니다.
 
 선택 환경 변수:
 
