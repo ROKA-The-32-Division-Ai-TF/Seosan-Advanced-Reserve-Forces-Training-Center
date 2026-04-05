@@ -165,9 +165,9 @@ def login_page(request: Request) -> HTMLResponse:
         setup_required = not has_any_admin(connection)
 
     return templates.TemplateResponse(
+        request,
         "login.html",
         {
-            "request": request,
             "setup_required": setup_required,
         },
     )
@@ -177,9 +177,9 @@ def login_page(request: Request) -> HTMLResponse:
 def dashboard_page(request: Request) -> HTMLResponse:
     user = require_user(request)
     return templates.TemplateResponse(
+        request,
         "dashboard.html",
         {
-            "request": request,
             "user": user,
             "auto_publish_enabled": settings.auto_publish_public_site,
         },
