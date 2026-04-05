@@ -1,0 +1,14 @@
+{
+  "status": "pending",
+  "title": "서산시 과학화 예비군 훈련장 설문 요약",
+  "generatedAt": "2026-04-05T22:23:22+09:00",
+  "message": "GOOGLE_SHEETS_CSV_URL 설정이 없어 자동 요약을 생성하지 못했습니다.",
+  "source": {
+    "totalResponses": 0,
+    "analyzedResponses": 0,
+    "latestResponseAt": "",
+    "includedColumns": [],
+    "excludedColumns": []
+  },
+  "summaryMarkdown": "## 설정 필요\n- 저장소 Secret 또는 self-hosted runner 환경 변수 `GOOGLE_SHEETS_CSV_URL`을 설정해 주세요.\n- Google Sheets 응답 시트는 CSV로 읽을 수 있는 주소여야 합니다."
+}

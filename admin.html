@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="서산시 과학화 예비군 훈련장 설문 요약 관리자 페이지"
+    />
+    <meta name="theme-color" content="#11253e" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2311253e'/%3E%3Cpath d='M32 8 50 14v16c0 11-7 19-18 24C21 49 14 41 14 30V14Z' fill='%23ffffff' fill-opacity='.92'/%3E%3C/svg%3E"
+    />
+    <title>설문 요약 관리자 페이지</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="admin.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#summary-main">본문 바로가기</a>
+
+    <div class="page-shell admin-shell">
+      <header class="hero admin-hero">
+        <div class="hero__watermark" aria-hidden="true">
+          <img
+            src="lExcPgSTgV_HoWrsVffyyPGuWyaWdDps7O39XOhIPVj6lCpgS_gLVsGyZ6gbtq5XIXHq3o5mcjUjQArbaQT_DQ.svg"
+            alt=""
+          />
+        </div>
+
+        <div class="admin-hero__top">
+          <a class="admin-hero__home" href="./index.html">안내 허브로 이동</a>
+          <span class="admin-hero__schedule">매일 15:30 자동 요약</span>
+        </div>
+
+        <div class="hero__title-wrap">
+          <img
+            class="hero__brand-mark"
+            src="ROKA_32nd_Infantry_Division_Insignia.svg.png"
+            alt="사단 마크"
+          />
+
+          <div class="hero__copy">
+            <p class="hero__eyebrow">Survey Summary Dashboard</p>
+            <h1 class="hero__title admin-hero__title">
+              <span class="hero__title-line">설문 요약</span>
+              <span class="hero__title-line">관리자 페이지</span>
+            </h1>
+          </div>
+        </div>
+      </header>
+
+      <main id="summary-main" class="content admin-content">
+        <section class="panel admin-panel">
+          <div class="panel__heading">
+            <div>
+              <p class="panel__eyebrow">운영 상태</p>
+              <h2 id="summary-title">서산시 과학화 예비군 훈련장 설문 요약</h2>
+            </div>
+            <span id="summary-status" class="summary-status summary-status--pending">대기 중</span>
+          </div>
+
+          <div class="summary-grid">
+            <article class="summary-stat">
+              <p class="summary-stat__label">최근 생성 시각</p>
+              <strong id="generated-at">아직 생성되지 않음</strong>
+            </article>
+
+            <article class="summary-stat">
+              <p class="summary-stat__label">전체 응답 수</p>
+              <strong id="total-responses">0</strong>
+            </article>
+
+            <article class="summary-stat">
+              <p class="summary-stat__label">분석 반영 수</p>
+              <strong id="analyzed-responses">0</strong>
+            </article>
+
+            <article class="summary-stat">
+              <p class="summary-stat__label">가장 최근 응답</p>
+              <strong id="latest-response">확인 전</strong>
+            </article>
+          </div>
+
+          <div class="summary-note">
+            <p id="summary-message">자동 요약 결과를 불러오는 중입니다.</p>
+          </div>
+        </section>
+
+        <section class="panel admin-panel">
+          <div class="panel__heading">
+            <div>
+              <p class="panel__eyebrow">LLM 요약</p>
+              <h2>종합 결과</h2>
+            </div>
+          </div>
+
+          <div id="summary-body" class="summary-body" aria-live="polite"></div>
+        </section>
+
+        <section class="panel admin-panel">
+          <div class="panel__heading">
+            <div>
+              <p class="panel__eyebrow">분석 기준</p>
+              <h2>반영 항목</h2>
+            </div>
+          </div>
+
+          <div class="summary-columns">
+            <div>
+              <p class="summary-columns__title">분석에 포함된 질문</p>
+              <div id="included-columns" class="chip-list"></div>
+            </div>
+
+            <div>
+              <p class="summary-columns__title">제외된 항목</p>
+              <div id="excluded-columns" class="chip-list"></div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="admin.js"></script>
+  </body>
+</html>

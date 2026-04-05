@@ -1,0 +1,45 @@
+name: Daily Survey Summary
+
+on:
+  schedule:
+    # 15:30 Asia/Seoul = 06:30 UTC
+    - cron: "30 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate-summary:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Generate summary JSON
+        env:
+          GOOGLE_SHEETS_CSV_URL: ${{ secrets.GOOGLE_SHEETS_CSV_URL }}
+          OLLAMA_API_URL: ${{ vars.OLLAMA_API_URL }}
+          OLLAMA_MODEL: ${{ vars.OLLAMA_MODEL }}
+          SUMMARY_OUTPUT_PATH: data/survey-summary.json
+          SUMMARY_TITLE: 서산시 과학화 예비군 훈련장 설문 요약
+        run: python3 tools/generate_survey_summary.py
+
+      - name: Commit and push summary
+        run: |
+          if git diff --quiet -- data/survey-summary.json; then
+            echo "No summary changes to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/survey-summary.json
+          git commit -m "Update daily survey summary"
+          git push
