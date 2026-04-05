@@ -2,3 +2,6 @@
 .playwright-cli/
 output/
 __pycache__/
+backend/storage/
+backend/.venv/
+.env

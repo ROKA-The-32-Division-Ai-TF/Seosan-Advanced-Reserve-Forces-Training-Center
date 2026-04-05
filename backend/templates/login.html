@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>관리자 로그인</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2311253e'/%3E%3Cpath d='M32 8 50 14v16c0 11-7 19-18 24C21 49 14 41 14 30V14Z' fill='%23ffffff' fill-opacity='.92'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="/static/admin-backend.css" />
+  </head>
+  <body class="admin-auth">
+    <main class="auth-shell">
+      <section class="auth-panel">
+        <div class="auth-panel__header">
+          <p class="auth-panel__eyebrow">Reserve Admin</p>
+          <h1>{% if setup_required %}초기 관리자 설정{% else %}관리자 로그인{% endif %}</h1>
+          <p class="auth-panel__copy">
+            {% if setup_required %}
+            최초 1회 관리자 계정을 만든 뒤 로그인해서 사용합니다.
+            {% else %}
+            관리자만 접근할 수 있는 백엔드 페이지입니다.
+            {% endif %}
+          </p>
+        </div>
+
+        <form id="auth-form" class="auth-form">
+          {% if setup_required %}
+          <label class="field">
+            <span>이름</span>
+            <input id="display-name" name="displayName" type="text" autocomplete="name" required />
+          </label>
+          {% endif %}
+
+          <label class="field">
+            <span>아이디</span>
+            <input id="username" name="username" type="text" autocomplete="username" required />
+          </label>
+
+          <label class="field">
+            <span>비밀번호</span>
+            <input id="password" name="password" type="password" autocomplete="current-password" required />
+          </label>
+
+          <button type="submit" class="primary-button">
+            {% if setup_required %}관리자 생성 후 시작{% else %}로그인{% endif %}
+          </button>
+          <p id="auth-message" class="auth-message" aria-live="polite"></p>
+        </form>
+      </section>
+    </main>
+
+    <script>
+      const setupRequired = {{ "true" if setup_required else "false" }};
+
+      document.querySelector("#auth-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const username = document.querySelector("#username").value.trim();
+        const password = document.querySelector("#password").value;
+        const displayNameField = document.querySelector("#display-name");
+        const message = document.querySelector("#auth-message");
+        const endpoint = setupRequired ? "/api/auth/setup" : "/api/auth/login";
+
+        const payload = {
+          username,
+          password,
+        };
+
+        if (setupRequired) {
+          payload.display_name = displayNameField.value.trim();
+        }
+
+        message.textContent = "처리 중입니다.";
+
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          message.textContent = data.detail || "요청을 처리하지 못했습니다.";
+          return;
+        }
+
+        window.location.href = "/admin";
+      });
+    </script>
+  </body>
+</html>

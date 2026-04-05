@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>관리자 대시보드</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2311253e'/%3E%3Cpath d='M32 8 50 14v16c0 11-7 19-18 24C21 49 14 41 14 30V14Z' fill='%23ffffff' fill-opacity='.92'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="/static/admin-backend.css" />
+  </head>
+  <body class="admin-dashboard">
+    <header class="dashboard-header">
+      <div>
+        <p class="dashboard-header__eyebrow">Secure Admin Backend</p>
+        <h1>관리자 대시보드</h1>
+      </div>
+
+      <div class="dashboard-header__tools">
+        <span class="dashboard-header__user">{{ user.displayName }} ({{ user.username }})</span>
+        <button id="logout-button" class="secondary-button" type="button">로그아웃</button>
+      </div>
+    </header>
+
+    <main class="dashboard-shell">
+      <section class="dashboard-card">
+        <div class="dashboard-card__heading">
+          <div>
+            <p class="dashboard-card__eyebrow">설문 요약</p>
+            <h2>매일 15:30 자동 갱신</h2>
+          </div>
+          <button id="run-summary-button" class="secondary-button" type="button">지금 다시 요약</button>
+        </div>
+
+        <div class="dashboard-summary">
+          <div class="dashboard-stat">
+            <span>상태</span>
+            <strong id="summary-status">확인 중</strong>
+          </div>
+          <div class="dashboard-stat">
+            <span>최근 생성</span>
+            <strong id="summary-generated-at">확인 중</strong>
+          </div>
+          <div class="dashboard-stat">
+            <span>전체 응답 수</span>
+            <strong id="summary-total">0</strong>
+          </div>
+          <div class="dashboard-stat">
+            <span>분석 반영 수</span>
+            <strong id="summary-analyzed">0</strong>
+          </div>
+        </div>
+
+        <div class="dashboard-note">
+          <p id="summary-message">설문 요약 상태를 불러오는 중입니다.</p>
+        </div>
+
+        <div id="summary-body" class="markdown-block"></div>
+      </section>
+
+      <section class="dashboard-card">
+        <div class="dashboard-card__heading">
+          <div>
+            <p class="dashboard-card__eyebrow">AI 공지 초안</p>
+            <h2>EXAONE 초안 생성</h2>
+          </div>
+        </div>
+
+        <label class="field">
+          <span>AI 요청</span>
+          <textarea id="draft-instruction" rows="5" placeholder="예: 오늘 복장 준수와 대열 유지 관련 공지사항 초안을 작성해줘"></textarea>
+        </label>
+        <div class="button-row">
+          <button id="draft-button" class="secondary-button" type="button">AI 초안 만들기</button>
+          <span id="draft-message" class="inline-message"></span>
+        </div>
+      </section>
+
+      <section class="dashboard-card">
+        <div class="dashboard-card__heading">
+          <div>
+            <p class="dashboard-card__eyebrow">공지 편집</p>
+            <h2>공지사항 작성 및 게시</h2>
+          </div>
+          <span class="inline-badge">{% if auto_publish_enabled %}GitHub 자동 반영 사용{% else %}GitHub 자동 반영 꺼짐{% endif %}</span>
+        </div>
+
+        <form id="notice-form" class="stack-form">
+          <input id="notice-id" type="hidden" />
+
+          <label class="field">
+            <span>공지 날짜</span>
+            <input id="notice-date" type="date" required />
+          </label>
+
+          <label class="field">
+            <span>공지 제목</span>
+            <input id="notice-title" type="text" maxlength="120" required />
+          </label>
+
+          <label class="field">
+            <span>공지 본문</span>
+            <textarea id="notice-content" rows="10" required></textarea>
+          </label>
+
+          <div class="checkbox-row">
+            <label><input id="notice-important" type="checkbox" /> 중요 공지</label>
+            <label><input id="notice-published" type="checkbox" checked /> 공개 페이지에 반영</label>
+          </div>
+
+          <div class="button-row">
+            <button type="submit" class="primary-button">공지 저장</button>
+            <button id="notice-reset" type="button" class="secondary-button">새 공지로 초기화</button>
+            <span id="notice-message" class="inline-message"></span>
+          </div>
+        </form>
+      </section>
+
+      <section class="dashboard-card">
+        <div class="dashboard-card__heading">
+          <div>
+            <p class="dashboard-card__eyebrow">현재 공지</p>
+            <h2>저장된 목록</h2>
+          </div>
+        </div>
+        <div id="notice-list" class="notice-list"></div>
+      </section>
+
+      <section class="dashboard-card">
+        <div class="dashboard-card__heading">
+          <div>
+            <p class="dashboard-card__eyebrow">관리자 계정</p>
+            <h2>다른 관리자 추가</h2>
+          </div>
+        </div>
+
+        <form id="admin-user-form" class="stack-form">
+          <label class="field">
+            <span>이름</span>
+            <input id="new-display-name" type="text" autocomplete="name" required />
+          </label>
+          <label class="field">
+            <span>아이디</span>
+            <input id="new-username" type="text" autocomplete="username" required />
+          </label>
+          <label class="field">
+            <span>비밀번호</span>
+            <input id="new-password" type="password" autocomplete="new-password" minlength="8" required />
+          </label>
+          <div class="button-row">
+            <button type="submit" class="secondary-button">관리자 추가</button>
+            <span id="admin-user-message" class="inline-message"></span>
+          </div>
+        </form>
+
+        <div id="admin-user-list" class="admin-user-list"></div>
+      </section>
+    </main>
+
+    <script>
+      window.adminBootstrap = {
+        currentUser: {{ user | tojson }},
+      };
+    </script>
+    <script src="/static/admin-backend.js"></script>
+  </body>
+</html>

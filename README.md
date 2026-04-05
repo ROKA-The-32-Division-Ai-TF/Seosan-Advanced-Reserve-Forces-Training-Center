@@ -1,28 +1,28 @@
 # 서산시 과학화 예비군 훈련장 웹 허브
 
-GitHub Pages에 바로 배포할 수 있는 정적 안내 페이지입니다.  
-운영자가 `data` 폴더와 설정 파일만 수정해도 설문, 식단, 공지사항, 정신전력평가 링크를 관리할 수 있도록 구성했습니다.
-추가로 관리자용 설문 요약 페이지와 매일 15:30 자동 요약 파이프라인을 포함합니다.
+공개 안내 페이지는 GitHub Pages용 정적 사이트로 유지하고,  
+관리자 기능은 별도 백엔드에서 로그인 후 사용하는 구조로 분리했습니다.
 
 ## 기본 파일 구조
 
 ```text
 index.html
-admin.html
-admin.css
-admin.js
 style.css
 script.js
 data/
   site-config.js
   meals.js
   notices.js
-  survey-summary.json
-.github/
-  workflows/
-    daily-survey-summary.yml
-tools/
-  generate_survey_summary.py
+backend/
+  app.py
+  config.py
+  db.py
+  security.py
+  services.py
+  manage_admin.py
+  requirements.txt
+  templates/
+  static/
 ```
 
 ## 가장 자주 수정하는 파일
@@ -102,66 +102,85 @@ chatbot: {
 - `isImportant: true`로 설정하면 `중요` 표시가 붙습니다.
 - 최신 날짜가 상단에 자동 정렬됩니다.
 
-## 관리자용 설문 요약 페이지
+## 관리자 백엔드
 
-- 관리자 페이지 주소: `/admin.html`
-- 실제 요약 결과는 `data/survey-summary.json` 파일을 읽어 화면에 표시됩니다.
-- 이 파일은 직접 수정하지 않고 자동 생성되도록 구성했습니다.
+관리자 기능은 GitHub Pages가 아니라 별도 백엔드 서버에서 운영합니다.
 
-## 매일 15:30 자동 요약 설정
+기능:
 
-이 자동화는 `GitHub-hosted runner`가 아니라 `self-hosted runner`를 기준으로 구성되어 있습니다.  
-이유는 Ollama + EXAONE이 사용자의 GPU 서버에서 돌아가야 하기 때문입니다.
+- 로그인 기반 관리자 접근
+- 관리자 계정 추가
+- 공지사항 작성 / 수정 / 삭제
+- EXAONE(Ollama) 기반 공지 초안 생성
+- 매일 15:30 설문 자동 요약
+- 설문 요약 조회
 
-### 1. self-hosted runner 준비
+### 실행 방법
 
-- 3080 Ti 서버 또는 Ollama가 설치된 서버에 GitHub self-hosted runner를 연결합니다.
-- 워크플로는 매일 `15:30 KST`에 실행됩니다.
-- GitHub cron 기준으로는 `06:30 UTC`입니다.
-
-### 2. 저장소 Secret / Variable 설정
-
-저장소 `Settings > Secrets and variables > Actions`에서 아래 값을 설정합니다.
-
-#### Secret
-
-- `GOOGLE_SHEETS_CSV_URL`
-
-설문 응답이 쌓이는 Google Sheets 주소는 CSV로 읽을 수 있어야 합니다.  
-가장 쉬운 방법은 응답 시트의 공유 주소 또는 CSV export 주소를 넣는 것입니다.
-
-예시:
-
-```text
-https://docs.google.com/spreadsheets/d/시트ID/export?format=csv&gid=0
+```bash
+python3 -m venv backend/.venv
+source backend/.venv/bin/activate
+pip install -r backend/requirements.txt
+uvicorn backend.app:app --reload
 ```
 
-#### Variable
+접속:
 
-- `OLLAMA_API_URL`
-  예시: `http://127.0.0.1:11434/api/chat`
-- `OLLAMA_MODEL`
-  예시: `exaone3.5`
+```text
+http://127.0.0.1:8000/admin/login
+```
 
-### 3. 자동 생성 결과
+### 초기 관리자 생성
 
-- 워크플로 파일: `.github/workflows/daily-survey-summary.yml`
-- 생성 스크립트: `tools/generate_survey_summary.py`
-- 결과 파일: `data/survey-summary.json`
+서버를 처음 열면 `/admin/login`에서 초기 관리자 계정을 바로 만들 수 있습니다.
 
-요약이 실행되면 최신 결과가 `data/survey-summary.json`으로 저장되고,  
-GitHub Pages의 `/admin.html` 화면에 표시됩니다.
+또는 CLI로 추가할 수도 있습니다.
 
-### 4. 수동 실행
+```bash
+python3 -m backend.manage_admin create-user admin "관리자 이름"
+```
 
-필요하면 `Actions > Daily Survey Summary > Run workflow`로 즉시 수동 실행할 수 있습니다.
+### 관리자 추가
 
-### 5. 개인정보 주의
+- 로그인 후 대시보드 하단에서 다른 관리자 계정을 추가할 수 있습니다.
+- 이렇게 만든 계정은 다른 담당자에게 넘겨서 같이 운영할 수 있습니다.
 
-- 스크립트는 `이름`, `전화`, `이메일`, `주소`, `소속`, `군번`처럼 민감할 가능성이 큰 열을 분석에서 제외하도록 구성했습니다.
-- 그래도 설문 문항 구조에 따라 추가 점검이 필요합니다.
-- 관리자 페이지는 현재 정적 페이지이므로 공개 저장소에서는 주소를 아는 사람이 접근할 수 있습니다.
-- 민감한 설문 요약이면 추후 별도 관리자 서버로 분리하는 것을 권장합니다.
+## 설문 자동 요약
+
+백엔드가 매일 `15:30 Asia/Seoul`에 Google Sheets 응답을 읽고 Ollama로 요약합니다.
+
+필수 환경 변수:
+
+```text
+ADMIN_SESSION_SECRET=충분히긴랜덤문자열
+GOOGLE_SHEETS_CSV_URL=https://docs.google.com/spreadsheets/d/시트ID/export?format=csv&gid=0
+OLLAMA_API_URL=http://127.0.0.1:11434/api/chat
+OLLAMA_MODEL=exaone3.5
+```
+
+선택 환경 변수:
+
+```text
+NOTICE_DRAFT_MODEL=exaone3.5
+ENABLE_SUMMARY_SCHEDULER=1
+```
+
+## 공개 페이지 공지 자동 반영
+
+관리자 백엔드는 공지 저장 시 `data/notices.js`를 다시 생성합니다.
+
+추가로 GitHub Pages까지 자동 반영하려면 백엔드 서버에서 이 저장소를 푸시할 수 있어야 하며, 아래 환경 변수를 설정합니다.
+
+```text
+AUTO_PUBLISH_PUBLIC_SITE=1
+PUBLIC_GIT_REMOTE=origin
+PUBLIC_GIT_BRANCH=main
+```
+
+주의:
+
+- 이 기능을 쓰려면 백엔드 서버의 저장소 clone에 푸시 권한이 있어야 합니다.
+- 자동 푸시를 꺼두면 로컬 파일만 갱신되고 GitHub Pages에는 반영되지 않습니다.
 
 ## GitHub Pages 반영 방법
 
@@ -186,4 +205,4 @@ git push
 - 설문 링크는 이미 연결되어 있습니다.
 - 정신전력평가 링크는 운영 시점에 추가하면 됩니다.
 - 예비군 챗봇은 외부 링크로 연결됩니다.
-- 관리자용 설문 요약은 `admin.html`에서 확인합니다.
+- 관리자 기능은 정적 페이지가 아니라 백엔드에서 로그인 후 사용합니다.
