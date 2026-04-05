@@ -6,9 +6,15 @@
 
 (function () {
   const siteConfig = window.siteConfig || {};
+  const publicSiteState = window.publicSiteState || {};
   const mealsData = Array.isArray(window.mealsData) ? window.mealsData : [];
   const noticesData = Array.isArray(window.noticesData) ? window.noticesData : [];
+  const emergencyContactsData = Array.isArray(window.emergencyContactsData) ? window.emergencyContactsData : [];
 
+  const siteAccessGate = document.querySelector("#site-access-gate");
+  const siteAccessTitle = document.querySelector("#site-access-title");
+  const siteAccessMessage = document.querySelector("#site-access-message");
+  const siteAccessSchedule = document.querySelector("#site-access-schedule");
   const currentTime = document.querySelector("#current-time");
   const currentDate = document.querySelector("#current-date");
   const currentWeather = document.querySelector("#current-weather");
@@ -20,10 +26,13 @@
   const mealSummary = document.querySelector("#meal-summary");
   const mealList = document.querySelector("#meal-list");
   const noticeList = document.querySelector("#notice-list");
+  const contactSummary = document.querySelector("#contact-summary");
+  const contactList = document.querySelector("#contact-list");
   const sectionLinks = Array.from(document.querySelectorAll("[data-section-link]"));
   const sectionPanels = Array.from(document.querySelectorAll("[data-section-panel]"));
 
   setupMeta(siteConfig);
+  applySiteAccessControl(publicSiteState);
   setupExternalLink(surveyLink, siteConfig.survey || {}, "설문 링크 준비 중");
   setupExternalLink(mentalLink, siteConfig.mentalEvaluation || {}, "링크 준비 중");
   setupExternalMenuLink(chatbotLink, siteConfig.chatbot || {});
@@ -32,6 +41,7 @@
   fetchWeather(siteConfig.weather || {});
   renderMeals(mealsData);
   renderNotices(noticesData);
+  renderEmergencyContacts(emergencyContactsData);
 
   function setupMeta(config) {
     const siteTitle = config.siteTitle || "서산시 과학화 예비군 훈련장";
@@ -158,6 +168,7 @@
 
   function updateClock() {
     const now = new Date();
+    applySiteAccessControl(publicSiteState, now);
 
     currentTime.textContent = new Intl.DateTimeFormat("ko-KR", {
       hour: "2-digit",
@@ -221,6 +232,28 @@
       currentWeather.textContent = `${cityName} 날씨 정보 없음`;
       weatherMeta.textContent = "실시간 기상 정보를 불러오지 못했습니다.";
     }
+  }
+
+  function applySiteAccessControl(state, currentDate) {
+    if (!siteAccessGate || !siteAccessTitle || !siteAccessMessage || !siteAccessSchedule) {
+      return;
+    }
+
+    const now = currentDate instanceof Date ? currentDate : new Date();
+    const evaluation = evaluateSiteAvailability(state, now);
+
+    siteAccessTitle.textContent = evaluation.title;
+    siteAccessMessage.textContent = evaluation.message;
+    siteAccessSchedule.textContent = evaluation.schedule;
+
+    if (evaluation.allowed) {
+      siteAccessGate.hidden = true;
+      document.body.classList.remove("is-site-locked");
+      return;
+    }
+
+    siteAccessGate.hidden = false;
+    document.body.classList.add("is-site-locked");
   }
 
   function renderMeals(items) {
@@ -353,6 +386,71 @@
     });
   }
 
+  function renderEmergencyContacts(items) {
+    if (!contactSummary || !contactList) {
+      return;
+    }
+
+    const normalizedItems = items
+      .filter((item) => item && typeof item === "object")
+      .filter((item) => item.name || item.phone);
+
+    contactSummary.innerHTML = "";
+    contactList.innerHTML = "";
+
+    if (normalizedItems.length === 0) {
+      contactSummary.appendChild(
+        createStatusCard(
+          "등록된 연락처 없음",
+          "긴급연락처가 아직 등록되지 않았습니다.",
+          "필요 시 교관 또는 조교에게 직접 문의해 주세요."
+        )
+      );
+      contactList.appendChild(
+        createEmptyState("관리자 페이지에서 비상연락망을 등록하면 이 영역에 표시됩니다.")
+      );
+      return;
+    }
+
+    contactSummary.appendChild(
+      createStatusCard(
+        "즉시 확인",
+        "긴급 상황 시 아래 연락처를 확인하세요.",
+        "상황에 맞는 담당자에게 바로 연락하면 됩니다."
+      )
+    );
+
+    normalizedItems.forEach((item) => {
+      const article = document.createElement("article");
+      article.className = "stack-item";
+
+      const meta = document.createElement("div");
+      meta.className = "stack-item__meta";
+
+      if (item.role) {
+        const roleBadge = document.createElement("span");
+        roleBadge.className = "stack-item__date";
+        roleBadge.textContent = item.role;
+        meta.appendChild(roleBadge);
+      }
+
+      const title = document.createElement("h3");
+      title.className = "stack-item__title";
+      title.textContent = item.name || "담당자";
+
+      const details = document.createElement("div");
+      details.className = "meal-details";
+      details.appendChild(createContactRow("전화", item.phone || "연락처 없음"));
+
+      if (item.note) {
+        details.appendChild(createContactRow("비고", item.note));
+      }
+
+      article.append(meta, title, details);
+      contactList.appendChild(article);
+    });
+  }
+
   function createMealRow(label, valueNode) {
     const row = document.createElement("div");
     row.className = "meal-details__row";
@@ -362,6 +460,22 @@
     labelNode.textContent = label;
 
     row.append(labelNode, valueNode);
+    return row;
+  }
+
+  function createContactRow(label, text) {
+    const row = document.createElement("div");
+    row.className = "contact-card__row";
+
+    const labelNode = document.createElement("p");
+    labelNode.className = "contact-card__label";
+    labelNode.textContent = label;
+
+    const textNode = document.createElement("p");
+    textNode.className = "rich-text";
+    textNode.textContent = text;
+
+    row.append(labelNode, textNode);
     return row;
   }
 
@@ -504,6 +618,71 @@
 
     const [, year, month, day] = match;
     return new Date(Number(year), Number(month) - 1, Number(day));
+  }
+
+  function evaluateSiteAvailability(state, now) {
+    const enabled = state.enabled !== false;
+    const useOperatingHours = state.useOperatingHours === true;
+    const startTime = normalizeTimeValue(state.startTime || "09:00");
+    const endTime = normalizeTimeValue(state.endTime || "15:30");
+    const closedMessage = typeof state.closedMessage === "string" && state.closedMessage.trim()
+      ? state.closedMessage.trim()
+      : "가동 시간이 아니거나 관리자에 의해 일시 중지되었습니다. 교관 또는 조교에게 문의해 주세요.";
+    const scheduleText = useOperatingHours
+      ? `운영 시간 ${startTime} ~ ${endTime} (Asia/Seoul)`
+      : "운영 시간 제한 없음";
+
+    if (!enabled) {
+      return {
+        allowed: false,
+        title: "현재는 접속할 수 없습니다.",
+        message: closedMessage,
+        schedule: scheduleText,
+      };
+    }
+
+    if (!useOperatingHours) {
+      return {
+        allowed: true,
+        title: "",
+        message: "",
+        schedule: scheduleText,
+      };
+    }
+
+    const seoulNow = new Date(
+      now.toLocaleString("en-US", {
+        timeZone: state.timezone || "Asia/Seoul",
+      })
+    );
+    const currentTime = `${String(seoulNow.getHours()).padStart(2, "0")}:${String(seoulNow.getMinutes()).padStart(2, "0")}`;
+    const withinWindow = startTime <= endTime
+      ? currentTime >= startTime && currentTime <= endTime
+      : currentTime >= startTime || currentTime <= endTime;
+
+    if (withinWindow) {
+      return {
+        allowed: true,
+        title: "",
+        message: "",
+        schedule: scheduleText,
+      };
+    }
+
+    return {
+      allowed: false,
+      title: "현재는 접속할 수 없습니다.",
+      message: closedMessage,
+      schedule: scheduleText,
+    };
+  }
+
+  function normalizeTimeValue(value) {
+    const match = String(value).match(/^(\d{2}):(\d{2})$/);
+    if (!match) {
+      return "00:00";
+    }
+    return `${match[1]}:${match[2]}`;
   }
 
   function getWeatherText(code) {

@@ -181,6 +181,12 @@ textarea {
   gap: 10px;
 }
 
+.responsive-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .dashboard-stat,
 .notice-item,
 .admin-user-item {
@@ -316,6 +322,10 @@ textarea {
   }
 
   .dashboard-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .responsive-grid {
     grid-template-columns: 1fr;
   }
 }

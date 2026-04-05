@@ -17,18 +17,29 @@ from .config import Settings, load_settings
 from .db import (
     connect,
     create_admin,
+    delete_emergency_contact,
+    delete_meal,
     create_notice,
     delete_notice,
     ensure_default_notice_seed,
+    export_emergency_contacts_js,
+    export_meals_js,
     export_notice_js,
+    export_public_state_js,
     find_admin_by_id,
     find_admin_by_username,
+    get_emergency_contacts,
+    get_meals,
+    get_public_site_settings,
     get_summary,
     has_any_admin,
     initialize_database,
     list_admins,
     list_notices,
     list_published_notices,
+    save_emergency_contact,
+    save_meal,
+    update_public_site_settings,
     update_notice,
     upsert_summary,
 )
@@ -57,6 +68,31 @@ class NoticePayload(BaseModel):
 
 class NoticeDraftPayload(BaseModel):
     instruction: str = Field(min_length=5, max_length=4000)
+
+
+class SiteSettingsPayload(BaseModel):
+    enabled: bool = True
+    useOperatingHours: bool = False
+    startTime: str = Field(pattern=r"^\d{2}:\d{2}$")
+    endTime: str = Field(pattern=r"^\d{2}:\d{2}$")
+    closedMessage: str = Field(min_length=5, max_length=300)
+
+
+class EmergencyContactPayload(BaseModel):
+    id: Optional[str] = None
+    name: str = Field(min_length=2, max_length=80)
+    role: str = Field(max_length=80, default="")
+    phone: str = Field(min_length=5, max_length=40)
+    note: str = Field(max_length=200, default="")
+    sortOrder: int = Field(default=0, ge=0, le=9999)
+
+
+class MealPayload(BaseModel):
+    id: Optional[str] = None
+    date: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")
+    mealType: str = Field(min_length=2, max_length=40)
+    menu: list[str] = Field(default_factory=list)
+    note: str = Field(max_length=200, default="")
 
 
 settings = load_settings()
@@ -88,6 +124,7 @@ def startup() -> None:
     with db_connection() as connection:
         initialize_database(connection)
         ensure_default_notice_seed(connection)
+        sync_public_files(connection)
 
     if settings.scheduler_enabled and scheduler is None:
         scheduler = BackgroundScheduler(timezone="Asia/Seoul")
@@ -192,6 +229,9 @@ def bootstrap(request: Request) -> dict[str, Any]:
             "user": user,
             "summary": get_summary(connection),
             "notices": list_notices(connection),
+            "meals": get_meals(connection),
+            "emergencyContacts": get_emergency_contacts(connection),
+            "publicSettings": get_public_site_settings(connection),
             "admins": list_admins(connection),
             "settings": {
                 "autoPublishPublicSite": settings.auto_publish_public_site,
@@ -246,9 +286,8 @@ def save_notice(payload: NoticePayload, request: Request) -> dict[str, Any]:
                 created_by=user["username"],
             )
 
-        published_notices = list_published_notices(connection)
-        export_notice_js(published_notices, settings.public_notices_path)
-        publish_result = maybe_publish_public_site(settings, [settings.public_notices_path])
+        changed_paths = sync_public_files(connection, ["notices"])
+        publish_result = maybe_publish_public_site(settings, changed_paths)
         notices = list_notices(connection)
 
     return {
@@ -264,12 +303,81 @@ def remove_notice(notice_id: int, request: Request) -> dict[str, Any]:
     require_user(request)
     with db_connection() as connection:
         delete_notice(connection, notice_id)
-        published_notices = list_published_notices(connection)
-        export_notice_js(published_notices, settings.public_notices_path)
-        publish_result = maybe_publish_public_site(settings, [settings.public_notices_path])
+        changed_paths = sync_public_files(connection, ["notices"])
+        publish_result = maybe_publish_public_site(settings, changed_paths)
         notices = list_notices(connection)
 
     return {"ok": True, "notices": notices, "publish": publish_result}
+
+
+@app.post("/api/admin/public-settings", response_class=JSONResponse)
+def save_public_settings(payload: SiteSettingsPayload, request: Request) -> dict[str, Any]:
+    require_user(request)
+    with db_connection() as connection:
+        public_settings = update_public_site_settings(connection, payload.model_dump())
+        changed_paths = sync_public_files(connection, ["public_settings"])
+        publish_result = maybe_publish_public_site(settings, changed_paths)
+
+    return {
+        "ok": True,
+        "message": "공개 사이트 운영 설정을 저장했습니다.",
+        "publicSettings": public_settings,
+        "publish": publish_result,
+    }
+
+
+@app.post("/api/admin/contacts", response_class=JSONResponse)
+def save_contact(payload: EmergencyContactPayload, request: Request) -> dict[str, Any]:
+    require_user(request)
+    with db_connection() as connection:
+        contacts = save_emergency_contact(connection, payload.model_dump())
+        changed_paths = sync_public_files(connection, ["contacts"])
+        publish_result = maybe_publish_public_site(settings, changed_paths)
+
+    return {
+        "ok": True,
+        "message": "비상연락망을 저장했습니다.",
+        "emergencyContacts": contacts,
+        "publish": publish_result,
+    }
+
+
+@app.delete("/api/admin/contacts/{contact_id}", response_class=JSONResponse)
+def remove_contact(contact_id: str, request: Request) -> dict[str, Any]:
+    require_user(request)
+    with db_connection() as connection:
+        contacts = delete_emergency_contact(connection, contact_id)
+        changed_paths = sync_public_files(connection, ["contacts"])
+        publish_result = maybe_publish_public_site(settings, changed_paths)
+
+    return {"ok": True, "emergencyContacts": contacts, "publish": publish_result}
+
+
+@app.post("/api/admin/meals", response_class=JSONResponse)
+def save_public_meal(payload: MealPayload, request: Request) -> dict[str, Any]:
+    require_user(request)
+    with db_connection() as connection:
+        meals = save_meal(connection, payload.model_dump())
+        changed_paths = sync_public_files(connection, ["meals"])
+        publish_result = maybe_publish_public_site(settings, changed_paths)
+
+    return {
+        "ok": True,
+        "message": "식사표를 저장했습니다.",
+        "meals": meals,
+        "publish": publish_result,
+    }
+
+
+@app.delete("/api/admin/meals/{meal_id}", response_class=JSONResponse)
+def remove_meal(meal_id: str, request: Request) -> dict[str, Any]:
+    require_user(request)
+    with db_connection() as connection:
+        meals = delete_meal(connection, meal_id)
+        changed_paths = sync_public_files(connection, ["meals"])
+        publish_result = maybe_publish_public_site(settings, changed_paths)
+
+    return {"ok": True, "meals": meals, "publish": publish_result}
 
 
 @app.post("/api/admin/summary/run", response_class=JSONResponse)
@@ -295,6 +403,29 @@ def run_summary_job() -> dict[str, Any]:
     with db_connection() as connection:
         upsert_summary(connection, payload)
     return {"ok": True, "summary": payload}
+
+
+def sync_public_files(connection: sqlite3.Connection, changed_keys: Optional[list[str]] = None) -> list[Any]:
+    changed = set(changed_keys or ["notices", "meals", "contacts", "public_settings"])
+    touched_paths = []
+
+    if "notices" in changed:
+        export_notice_js(list_published_notices(connection), settings.public_notices_path)
+        touched_paths.append(settings.public_notices_path)
+
+    if "meals" in changed:
+        export_meals_js(get_meals(connection), settings.public_meals_path)
+        touched_paths.append(settings.public_meals_path)
+
+    if "contacts" in changed:
+        export_emergency_contacts_js(get_emergency_contacts(connection), settings.public_contacts_path)
+        touched_paths.append(settings.public_contacts_path)
+
+    if "public_settings" in changed:
+        export_public_state_js(get_public_site_settings(connection), settings.public_state_path)
+        touched_paths.append(settings.public_state_path)
+
+    return touched_paths
 
 
 def get_current_user(request: Request) -> Optional[dict[str, Any]]:

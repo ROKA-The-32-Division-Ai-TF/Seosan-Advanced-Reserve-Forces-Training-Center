@@ -27,6 +27,142 @@
       <section class="dashboard-card">
         <div class="dashboard-card__heading">
           <div>
+            <p class="dashboard-card__eyebrow">공개 사이트 운영</p>
+            <h2>가동 시간 및 접근 제어</h2>
+          </div>
+          <span class="inline-badge">{% if auto_publish_enabled %}GitHub 자동 반영 사용{% else %}GitHub 자동 반영 꺼짐{% endif %}</span>
+        </div>
+
+        <div class="dashboard-note">
+          <p>
+            스마트폰에서 관리자 페이지를 사용하려면 맥북과 같은 네트워크에서 백엔드를
+            <strong>0.0.0.0:8000</strong>으로 실행한 뒤
+            <strong>http://맥북IP:8000/admin/login</strong>으로 접속하세요.
+          </p>
+        </div>
+
+        <form id="public-settings-form" class="stack-form">
+          <div class="checkbox-row">
+            <label><input id="site-enabled" type="checkbox" checked /> 공개 사이트 가동</label>
+            <label><input id="site-use-hours" type="checkbox" /> 시간 제한 사용</label>
+          </div>
+
+          <div class="responsive-grid">
+            <label class="field">
+              <span>시작 시간</span>
+              <input id="site-start-time" type="time" value="09:00" required />
+            </label>
+            <label class="field">
+              <span>종료 시간</span>
+              <input id="site-end-time" type="time" value="15:30" required />
+            </label>
+          </div>
+
+          <label class="field">
+            <span>접근 제한 안내 문구</span>
+            <textarea id="site-closed-message" rows="4"></textarea>
+          </label>
+
+          <div class="button-row">
+            <button type="submit" class="primary-button">운영 설정 저장</button>
+            <span id="site-settings-message" class="inline-message"></span>
+          </div>
+        </form>
+      </section>
+
+      <section class="dashboard-card">
+        <div class="dashboard-card__heading">
+          <div>
+            <p class="dashboard-card__eyebrow">비상연락망</p>
+            <h2>긴급연락처 관리</h2>
+          </div>
+        </div>
+
+        <form id="contact-form" class="stack-form">
+          <input id="contact-id" type="hidden" />
+
+          <div class="responsive-grid">
+            <label class="field">
+              <span>이름</span>
+              <input id="contact-name" type="text" required />
+            </label>
+            <label class="field">
+              <span>담당 구분</span>
+              <input id="contact-role" type="text" placeholder="예: 교관, 당직실" />
+            </label>
+          </div>
+
+          <div class="responsive-grid">
+            <label class="field">
+              <span>전화번호</span>
+              <input id="contact-phone" type="text" inputmode="tel" required />
+            </label>
+            <label class="field">
+              <span>정렬 순서</span>
+              <input id="contact-sort-order" type="number" min="0" step="1" value="0" />
+            </label>
+          </div>
+
+          <label class="field">
+            <span>비고</span>
+            <textarea id="contact-note" rows="3" placeholder="예: 응급 상황 우선 연락"></textarea>
+          </label>
+
+          <div class="button-row">
+            <button type="submit" class="primary-button">연락처 저장</button>
+            <button id="contact-reset" type="button" class="secondary-button">새 연락처로 초기화</button>
+            <span id="contact-message" class="inline-message"></span>
+          </div>
+        </form>
+
+        <div id="contact-list" class="notice-list"></div>
+      </section>
+
+      <section class="dashboard-card">
+        <div class="dashboard-card__heading">
+          <div>
+            <p class="dashboard-card__eyebrow">식사표</p>
+            <h2>오늘 식단 관리</h2>
+          </div>
+        </div>
+
+        <form id="meal-form" class="stack-form">
+          <input id="meal-id" type="hidden" />
+
+          <div class="responsive-grid">
+            <label class="field">
+              <span>날짜</span>
+              <input id="meal-date" type="date" required />
+            </label>
+            <label class="field">
+              <span>구분</span>
+              <input id="meal-type" type="text" placeholder="예: 중식" required />
+            </label>
+          </div>
+
+          <label class="field">
+            <span>메뉴</span>
+            <textarea id="meal-menu-text" rows="5" placeholder="한 줄에 한 메뉴씩 입력"></textarea>
+          </label>
+
+          <label class="field">
+            <span>비고</span>
+            <textarea id="meal-note" rows="3" placeholder="배식 시간 또는 안내 문구"></textarea>
+          </label>
+
+          <div class="button-row">
+            <button type="submit" class="primary-button">식사표 저장</button>
+            <button id="meal-reset" type="button" class="secondary-button">새 식사표로 초기화</button>
+            <span id="meal-message" class="inline-message"></span>
+          </div>
+        </form>
+
+        <div id="meal-list" class="notice-list"></div>
+      </section>
+
+      <section class="dashboard-card">
+        <div class="dashboard-card__heading">
+          <div>
             <p class="dashboard-card__eyebrow">설문 요약</p>
             <h2>매일 15:30 자동 갱신</h2>
           </div>
@@ -83,7 +219,6 @@
             <p class="dashboard-card__eyebrow">공지 편집</p>
             <h2>공지사항 작성 및 게시</h2>
           </div>
-          <span class="inline-badge">{% if auto_publish_enabled %}GitHub 자동 반영 사용{% else %}GitHub 자동 반영 꺼짐{% endif %}</span>
         </div>
 
         <form id="notice-form" class="stack-form">

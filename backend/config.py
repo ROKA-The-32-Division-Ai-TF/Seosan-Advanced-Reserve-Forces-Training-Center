@@ -19,6 +19,9 @@ class Settings:
     notice_draft_model: str
     summary_sheet_csv_url: str
     public_notices_path: Path
+    public_meals_path: Path
+    public_contacts_path: Path
+    public_state_path: Path
     public_git_remote: str
     public_git_branch: str
     auto_publish_public_site: bool
@@ -44,6 +47,15 @@ def load_settings() -> Settings:
         summary_sheet_csv_url=os.getenv("GOOGLE_SHEETS_CSV_URL", "").strip(),
         public_notices_path=Path(
             os.getenv("PUBLIC_NOTICES_PATH", repo_root / "data" / "notices.js")
+        ).resolve(),
+        public_meals_path=Path(
+            os.getenv("PUBLIC_MEALS_PATH", repo_root / "data" / "meals.js")
+        ).resolve(),
+        public_contacts_path=Path(
+            os.getenv("PUBLIC_CONTACTS_PATH", repo_root / "data" / "emergency-contacts.js")
+        ).resolve(),
+        public_state_path=Path(
+            os.getenv("PUBLIC_STATE_PATH", repo_root / "data" / "public-state.js")
         ).resolve(),
         public_git_remote=os.getenv("PUBLIC_GIT_REMOTE", "origin").strip() or "origin",
         public_git_branch=os.getenv("PUBLIC_GIT_BRANCH", "main").strip() or "main",

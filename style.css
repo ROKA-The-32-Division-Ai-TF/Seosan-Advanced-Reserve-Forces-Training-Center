@@ -45,6 +45,10 @@ body {
     linear-gradient(180deg, #eef3f7 0%, #f7f9fb 100%);
 }
 
+body.is-site-locked {
+  overflow: hidden;
+}
+
 a {
   color: inherit;
 }
@@ -78,6 +82,45 @@ textarea {
   width: min(calc(100% - 20px), var(--content-width));
   margin: 0 auto;
   padding: 14px 0 36px;
+}
+
+.site-access-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(10, 23, 40, 0.82);
+}
+
+.site-access-gate__panel {
+  width: min(100%, 420px);
+  padding: 24px 20px;
+  background: var(--surface-strong);
+  border-top: 6px solid var(--navy);
+  box-shadow: var(--shadow);
+}
+
+.site-access-gate__eyebrow {
+  margin: 0;
+  color: var(--blue);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.site-access-gate__panel h1 {
+  margin: 10px 0 0;
+  font-size: 1.6rem;
+  line-height: 1.2;
+}
+
+.site-access-gate__message,
+.site-access-gate__schedule {
+  margin: 12px 0 0;
+  color: var(--ink-soft);
+  line-height: 1.7;
 }
 
 .hero,
@@ -511,6 +554,18 @@ a:focus-visible {
   background: #eef3f8;
   border: 1px solid #cfdae3;
   font-size: 0.92rem;
+}
+
+.contact-card__row {
+  display: grid;
+  gap: 6px;
+}
+
+.contact-card__label {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--blue);
 }
 
 .accordion-list details {

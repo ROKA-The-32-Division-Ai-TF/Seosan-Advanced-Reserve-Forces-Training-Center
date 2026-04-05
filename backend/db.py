@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-import re
+import secrets
 import sqlite3
 from datetime import datetime
 from pathlib import Path
@@ -35,6 +35,15 @@ FIXED_NOTICE_CONTENT = """1️⃣ 복장 및 군기 준수 안내
 
 훈련 간 이동 시에는 대열을 유지하고 통제에 따라 이동해 주시기 바랍니다.
 안전사고 예방과 원활한 진행을 위해 반드시 협조해 주시기 바랍니다."""
+
+DEFAULT_PUBLIC_SITE_SETTINGS = {
+    "enabled": True,
+    "useOperatingHours": False,
+    "startTime": "09:00",
+    "endTime": "15:30",
+    "timezone": "Asia/Seoul",
+    "closedMessage": "가동 시간이 아니거나 관리자에 의해 일시 중지되었습니다. 교관 또는 조교에게 문의해 주세요.",
+}
 
 
 def connect(database_path: Path) -> sqlite3.Connection:
@@ -75,6 +84,20 @@ def initialize_database(connection: sqlite3.Connection) -> None:
         """
     )
     connection.commit()
+    ensure_default_app_meta(connection)
+
+
+def ensure_default_app_meta(connection: sqlite3.Connection) -> None:
+    ensure_meta_json(connection, "public_site_settings", DEFAULT_PUBLIC_SITE_SETTINGS)
+    ensure_meta_json(connection, "emergency_contacts", [])
+    ensure_meta_json(connection, "meals", [])
+
+
+def ensure_meta_json(connection: sqlite3.Connection, key: str, default_value: Any) -> None:
+    row = connection.execute("SELECT 1 FROM app_meta WHERE key = ?", (key,)).fetchone()
+    if row:
+        return
+    set_json_meta(connection, key, default_value)
 
 
 def has_any_admin(connection: sqlite3.Connection) -> bool:
@@ -122,38 +145,99 @@ def list_admins(connection: sqlite3.Connection) -> list[dict[str, Any]]:
 
 
 def upsert_summary(connection: sqlite3.Connection, payload: dict[str, Any]) -> None:
-    now = now_iso()
-    connection.execute(
-        """
-        INSERT INTO app_meta (key, value, updated_at)
-        VALUES ('survey_summary', ?, ?)
-        ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
-        """,
-        (json.dumps(payload, ensure_ascii=False), now),
-    )
-    connection.commit()
+    set_json_meta(connection, "survey_summary", payload)
 
 
 def get_summary(connection: sqlite3.Connection) -> dict[str, Any]:
-    row = connection.execute(
-        "SELECT value FROM app_meta WHERE key = 'survey_summary'"
-    ).fetchone()
-    if not row:
-        return {
-            "status": "pending",
-            "title": "서산시 과학화 예비군 훈련장 설문 요약",
-            "generatedAt": None,
-            "message": "아직 생성된 설문 요약이 없습니다.",
-            "source": {
-                "totalResponses": 0,
-                "analyzedResponses": 0,
-                "latestResponseAt": "",
-                "includedColumns": [],
-                "excludedColumns": [],
-            },
-            "summaryMarkdown": "## 대기 중\n- 아직 생성된 설문 요약이 없습니다.",
-        }
-    return json.loads(row["value"])
+    data = get_json_meta(connection, "survey_summary")
+    if data is not None:
+        return data
+    return {
+        "status": "pending",
+        "title": "서산시 과학화 예비군 훈련장 설문 요약",
+        "generatedAt": None,
+        "message": "아직 생성된 설문 요약이 없습니다.",
+        "source": {
+            "totalResponses": 0,
+            "analyzedResponses": 0,
+            "latestResponseAt": "",
+            "includedColumns": [],
+            "excludedColumns": [],
+        },
+        "summaryMarkdown": "## 대기 중\n- 아직 생성된 설문 요약이 없습니다.",
+    }
+
+
+def get_public_site_settings(connection: sqlite3.Connection) -> dict[str, Any]:
+    stored = get_json_meta(connection, "public_site_settings") or {}
+    merged = dict(DEFAULT_PUBLIC_SITE_SETTINGS)
+    merged.update(stored)
+    return merged
+
+
+def update_public_site_settings(connection: sqlite3.Connection, payload: dict[str, Any]) -> dict[str, Any]:
+    merged = get_public_site_settings(connection)
+    merged.update(payload)
+    set_json_meta(connection, "public_site_settings", merged)
+    return merged
+
+
+def get_emergency_contacts(connection: sqlite3.Connection) -> list[dict[str, Any]]:
+    return normalize_contacts(get_json_meta(connection, "emergency_contacts") or [])
+
+
+def save_emergency_contact(connection: sqlite3.Connection, payload: dict[str, Any]) -> list[dict[str, Any]]:
+    contacts = get_emergency_contacts(connection)
+    contact_id = payload.get("id") or generate_item_id("contact")
+    updated = False
+
+    for index, item in enumerate(contacts):
+        if item["id"] == contact_id:
+            contacts[index] = build_contact(payload, contact_id)
+            updated = True
+            break
+
+    if not updated:
+        contacts.append(build_contact(payload, contact_id))
+
+    contacts = sorted(contacts, key=lambda item: (item.get("sortOrder", 9999), item.get("name", "")))
+    set_json_meta(connection, "emergency_contacts", contacts)
+    return contacts
+
+
+def delete_emergency_contact(connection: sqlite3.Connection, contact_id: str) -> list[dict[str, Any]]:
+    contacts = [item for item in get_emergency_contacts(connection) if item["id"] != contact_id]
+    set_json_meta(connection, "emergency_contacts", contacts)
+    return contacts
+
+
+def get_meals(connection: sqlite3.Connection) -> list[dict[str, Any]]:
+    return normalize_meals(get_json_meta(connection, "meals") or [])
+
+
+def save_meal(connection: sqlite3.Connection, payload: dict[str, Any]) -> list[dict[str, Any]]:
+    meals = get_meals(connection)
+    meal_id = payload.get("id") or generate_item_id("meal")
+    updated = False
+
+    for index, item in enumerate(meals):
+        if item["id"] == meal_id:
+            meals[index] = build_meal(payload, meal_id)
+            updated = True
+            break
+
+    if not updated:
+        meals.append(build_meal(payload, meal_id))
+
+    meals = sorted(meals, key=lambda item: (item.get("date", ""), item.get("mealType", "")), reverse=True)
+    set_json_meta(connection, "meals", meals)
+    return meals
+
+
+def delete_meal(connection: sqlite3.Connection, meal_id: str) -> list[dict[str, Any]]:
+    meals = [item for item in get_meals(connection) if item["id"] != meal_id]
+    set_json_meta(connection, "meals", meals)
+    return meals
 
 
 def create_notice(
@@ -269,7 +353,6 @@ def serialize_notice_row(row: sqlite3.Row) -> dict[str, Any]:
 
 
 def export_notice_js(notices: list[dict[str, Any]], target_path: Path) -> None:
-    target_path.parent.mkdir(parents=True, exist_ok=True)
     lines = [
         "/* 관리자 백엔드에서 자동 생성됩니다. 직접 수정하지 마세요. */",
         "window.noticesData = [",
@@ -277,23 +360,154 @@ def export_notice_js(notices: list[dict[str, Any]], target_path: Path) -> None:
 
     for notice in notices:
         content = escape_template_string(notice["content"])
-        title = json.dumps(notice["title"], ensure_ascii=False)
-        date = json.dumps(notice["date"], ensure_ascii=False)
-        important = "true" if notice["isImportant"] else "false"
         lines.extend(
             [
                 "  {",
-                f"    date: {date},",
-                f"    title: {title},",
+                f"    date: {json.dumps(notice['date'], ensure_ascii=False)},",
+                f"    title: {json.dumps(notice['title'], ensure_ascii=False)},",
                 f"    content: `{content}`,",
-                f"    isImportant: {important},",
+                f"    isImportant: {'true' if notice['isImportant'] else 'false'},",
                 "  },",
             ]
         )
 
     lines.append("];")
-    lines.append("")
-    target_path.write_text("\n".join(lines), encoding="utf-8")
+    write_js_file(target_path, lines)
+
+
+def export_meals_js(meals: list[dict[str, Any]], target_path: Path) -> None:
+    lines = [
+        "/* 관리자 백엔드에서 자동 생성됩니다. 직접 수정하지 마세요. */",
+        "window.mealsData = [",
+    ]
+
+    for meal in meals:
+        menu_json = json.dumps(meal.get("menu", []), ensure_ascii=False)
+        lines.extend(
+            [
+                "  {",
+                f"    date: {json.dumps(meal['date'], ensure_ascii=False)},",
+                f"    mealType: {json.dumps(meal['mealType'], ensure_ascii=False)},",
+                f"    menu: {menu_json},",
+                f"    note: {json.dumps(meal.get('note', ''), ensure_ascii=False)},",
+                "  },",
+            ]
+        )
+
+    lines.append("];")
+    write_js_file(target_path, lines)
+
+
+def export_emergency_contacts_js(contacts: list[dict[str, Any]], target_path: Path) -> None:
+    lines = [
+        "/* 관리자 백엔드에서 자동 생성됩니다. 직접 수정하지 마세요. */",
+        "window.emergencyContactsData = [",
+    ]
+
+    for contact in contacts:
+        lines.extend(
+            [
+                "  {",
+                f"    name: {json.dumps(contact['name'], ensure_ascii=False)},",
+                f"    role: {json.dumps(contact.get('role', ''), ensure_ascii=False)},",
+                f"    phone: {json.dumps(contact.get('phone', ''), ensure_ascii=False)},",
+                f"    note: {json.dumps(contact.get('note', ''), ensure_ascii=False)},",
+                "  },",
+            ]
+        )
+
+    lines.append("];")
+    write_js_file(target_path, lines)
+
+
+def export_public_state_js(site_settings: dict[str, Any], target_path: Path) -> None:
+    lines = [
+        "/* 관리자 백엔드에서 자동 생성됩니다. 직접 수정하지 마세요. */",
+        f"window.publicSiteState = {json.dumps(site_settings, ensure_ascii=False, indent=2)};",
+    ]
+    write_js_file(target_path, lines)
+
+
+def get_json_meta(connection: sqlite3.Connection, key: str) -> Any:
+    row = connection.execute("SELECT value FROM app_meta WHERE key = ?", (key,)).fetchone()
+    if not row:
+        return None
+    return json.loads(row["value"])
+
+
+def set_json_meta(connection: sqlite3.Connection, key: str, value: Any) -> None:
+    now = now_iso()
+    connection.execute(
+        """
+        INSERT INTO app_meta (key, value, updated_at)
+        VALUES (?, ?, ?)
+        ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
+        """,
+        (key, json.dumps(value, ensure_ascii=False), now),
+    )
+    connection.commit()
+
+
+def normalize_contacts(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    normalized = []
+    for item in items:
+        normalized.append(
+            {
+                "id": str(item.get("id") or generate_item_id("contact")),
+                "name": str(item.get("name") or "").strip(),
+                "role": str(item.get("role") or "").strip(),
+                "phone": str(item.get("phone") or "").strip(),
+                "note": str(item.get("note") or "").strip(),
+                "sortOrder": int(item.get("sortOrder") or 0),
+            }
+        )
+    return normalized
+
+
+def normalize_meals(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    normalized = []
+    for item in items:
+        menu = item.get("menu") or []
+        normalized.append(
+            {
+                "id": str(item.get("id") or generate_item_id("meal")),
+                "date": str(item.get("date") or "").strip(),
+                "mealType": str(item.get("mealType") or "").strip(),
+                "menu": [str(value).strip() for value in menu if str(value).strip()],
+                "note": str(item.get("note") or "").strip(),
+            }
+        )
+    return normalized
+
+
+def build_contact(payload: dict[str, Any], contact_id: str) -> dict[str, Any]:
+    return {
+        "id": contact_id,
+        "name": str(payload.get("name") or "").strip(),
+        "role": str(payload.get("role") or "").strip(),
+        "phone": str(payload.get("phone") or "").strip(),
+        "note": str(payload.get("note") or "").strip(),
+        "sortOrder": int(payload.get("sortOrder") or 0),
+    }
+
+
+def build_meal(payload: dict[str, Any], meal_id: str) -> dict[str, Any]:
+    return {
+        "id": meal_id,
+        "date": str(payload.get("date") or "").strip(),
+        "mealType": str(payload.get("mealType") or "").strip(),
+        "menu": [str(value).strip() for value in (payload.get("menu") or []) if str(value).strip()],
+        "note": str(payload.get("note") or "").strip(),
+    }
+
+
+def generate_item_id(prefix: str) -> str:
+    return f"{prefix}_{secrets.token_hex(6)}"
+
+
+def write_js_file(target_path: Path, lines: list[str]) -> None:
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    target_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def escape_template_string(value: str) -> str:

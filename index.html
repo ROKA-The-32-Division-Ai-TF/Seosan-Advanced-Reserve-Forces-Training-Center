@@ -18,6 +18,17 @@
   <body>
     <a class="skip-link" href="#main-content">본문 바로가기</a>
 
+    <div id="site-access-gate" class="site-access-gate" hidden>
+      <div class="site-access-gate__panel">
+        <p class="site-access-gate__eyebrow">Access Control</p>
+        <h1 id="site-access-title">현재는 접속할 수 없습니다.</h1>
+        <p id="site-access-message" class="site-access-gate__message">
+          운영 시간이 아니거나 관리자에 의해 일시 중지되었습니다.
+        </p>
+        <p id="site-access-schedule" class="site-access-gate__schedule"></p>
+      </div>
+    </div>
+
     <div class="page-shell">
       <header class="hero">
         <div class="hero__watermark" aria-hidden="true">
@@ -93,6 +104,17 @@
               </svg>
             </span>
             <strong>공지사항</strong>
+          </a>
+
+          <a class="menu-card" href="#emergency-contacts" data-section-link="emergency-contacts">
+            <span class="menu-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path
+                  d="M12 3 4 7v6c0 4.6 3 7.9 8 8 5-.1 8-3.4 8-8V7l-8-4Zm0 4v10m-4-5h8"
+                />
+              </svg>
+            </span>
+            <strong>긴급연락처</strong>
           </a>
 
           <a
@@ -192,7 +214,7 @@
         <section id="mental-evaluation" class="panel content-panel" data-section-panel hidden>
           <div class="panel__heading">
             <div>
-              <p class="panel__eyebrow">4. 정신전력평가</p>
+              <p class="panel__eyebrow">5. 정신전력평가</p>
               <h2>평가 링크</h2>
             </div>
             <span class="panel__tag">준비 상태</span>
@@ -213,13 +235,28 @@
           </div>
         </section>
 
+        <section id="emergency-contacts" class="panel content-panel" data-section-panel hidden>
+          <div class="panel__heading">
+            <div>
+              <p class="panel__eyebrow">4. 긴급연락처</p>
+              <h2>비상연락망</h2>
+            </div>
+            <span class="panel__tag">현장 문의</span>
+          </div>
+
+          <div id="contact-summary" class="status-card" aria-live="polite"></div>
+          <div id="contact-list" class="stack-list" aria-live="polite"></div>
+        </section>
+
       </main>
 
     </div>
 
     <script src="data/site-config.js"></script>
+    <script src="data/public-state.js"></script>
     <script src="data/meals.js"></script>
     <script src="data/notices.js"></script>
+    <script src="data/emergency-contacts.js"></script>
     <script src="data/regulations.js"></script>
     <script src="script.js"></script>
   </body>
